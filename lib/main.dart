@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:grow_a_ting/ui/plants/find_plants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ui/auth/login_page.dart';
 import 'ui/auth/signup_page.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Yaad Garden',
       theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFFAFAFA),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
@@ -38,6 +40,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
         '/home': (context) => const HomePage(),
+        '/plants/find': (context) => const FindPlantsPage(),
       },
     );
   }

@@ -74,34 +74,49 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yaad Garden'),
+       titleSpacing: 0,
+        title: RichText(
+          text: const TextSpan(
+            style:  TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500, // Medium-bold
+            ),
+            children: [
+               TextSpan(
+                text: 'Yaad ',
+                style: TextStyle(color: Colors.black),
+              ),
+               TextSpan(
+                text: 'Garden',
+                style: TextStyle(color: Color(0xFF025A1E)),
+              ),
+            ],
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.black),
           onPressed: () {},
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: () {
-              setState(() {
-                isLoading = true;
-                errorMessage = null;
-              });
-              fetchWeather();
-            },
-          ),
-        ],
+        
       ),
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? _buildErrorWidget()
-              : weatherData != null
-                  ? _buildWeatherContent()
-                  : const Center(child: Text('No weather data available')),
+    ? const Center(child: CircularProgressIndicator())
+    : errorMessage != null
+        ? _buildErrorWidget()
+        : weatherData == null
+            ? const Center(child: Text('No weather data available'))
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildWeatherContent(),
+                    _buildMyPlantsSection(),
+                  ],
+                ),
+    ),
     );
   }
 
@@ -201,4 +216,80 @@ class _HomePageState extends State<HomePage> {
         return Icons.cloud_queue;
     }
   }
+
+
+  
+  // My Plants Section
+  Widget _buildMyPlantsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'My Plants',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                   Navigator.pushNamed(context, '/plants/find');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF399942),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Empty state placeholder for now
+          Center(
+            child: Column(
+              children: [
+                Image.asset(
+                  'assets/images/potted-plants.png', 
+                  height: 220,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No plants yet',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Tap the + button to add your first plant!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+  
+  
 }
