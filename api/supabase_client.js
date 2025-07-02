@@ -1,7 +1,7 @@
-const express = require('express');
-const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
-const fetch = require('node-fetch');
+import express from 'express';
+import multer from 'multer';
+import { createClient } from '@supabase/supabase-js';
+import fetch from 'node-fetch';
 
 const app = express();
 const upload = multer({
@@ -125,6 +125,48 @@ app.get('/plants', async (req, res) => {
     res.status(500).send('Failed to retrieve plants.');
   }
 });
+
+
+// app.get('/plants', async (req, res) => {
+//   try {
+//     // Get plants with image_id
+//     const { data: plants, error: plantError } = await supabase
+//       .from('plant')
+//       .select('plant_id, name, description, image_id');
+    
+//     if (plantError) throw plantError;
+    
+//     // Get all images
+//     const { data: images, error: imageError } = await supabase
+//       .from('image')
+//       .select('image_id, url');
+    
+//     if (imageError) throw imageError;
+    
+//     // Create image lookup map
+//     const imageMap = {};
+//     images.forEach(img => {
+//       imageMap[img.image_id] = img.url;
+//     });
+    
+//     console.log('Image map:', imageMap); // Debug: see what images we have
+    
+//     // Combine data
+//     const plantsWithImages = plants.map(plant => ({
+//       plant_id: plant.plant_id,
+//       name: plant.name,
+//       description: plant.description,
+//       image_url: plant.image_id ? imageMap[plant.image_id] : null,
+//     }));
+    
+//     console.log('Final result:', plantsWithImages); // Debug: see final result
+//     res.status(200).json(plantsWithImages);
+//   } catch (err) {
+//     console.error('Error fetching plants:', err);
+//     res.status(500).send('Failed to retrieve plants.');
+//   }
+// });
+
 
 
 app.get('/user/:user_id/plants', async (req, res) => {
@@ -289,3 +331,5 @@ app.post('/diagnose/:image_id', async (req, res) => {
 
 
 app.listen(3000, () => console.log('Server running on port 3000'));
+
+

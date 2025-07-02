@@ -78,7 +78,7 @@ Future<void> _createUserProfile({
   required String email,
 }) async {
   try {
-    final response = await _supabase.from('user_profile').insert({
+    final response = await _supabase.from('users').insert({
       'user_id': userId,
       'name': name,
       'email': email,
@@ -102,7 +102,7 @@ Future<void> _createUserProfile({
 
     try {
       final response = await _supabase
-          .from('user_profile')
+          .from('users')
           .select()
           .eq('user_id', currentUser!.id)
           .single();
