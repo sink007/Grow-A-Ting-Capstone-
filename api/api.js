@@ -1,9 +1,19 @@
-const express = require("express");
-const multer = require("multer");
-const fetch = require("node-fetch");
-const FormData = require("form-data");
-const { createClient } = require("@supabase/supabase-js");
-require("dotenv").config();
+// const express = require("express");
+// const multer = require("multer");
+// const fetch = require("node-fetch");
+// const FormData = require("form-data");
+// const { createClient } = require("@supabase/supabase-js");
+// require("dotenv").config();
+import express from "express";
+import multer from "multer";
+import fetch from "node-fetch";
+import FormData from "form-data";
+import { createClient } from "@supabase/supabase-js";
+import { Buffer } from 'buffer';
+
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });

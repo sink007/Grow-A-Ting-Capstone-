@@ -2,32 +2,33 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:grow_a_ting/model/plant_model.dart';
 import 'dart:convert';
 
 // Plant model to structure the data
-class Plant {
-  final int plantId;
-  final String name;
-  final String? imageUrl;
-  final String? description;
+// class Plant {
+//   final int plantId;
+//   final String name;
+//   final String? imageUrl;
+//   final String? description;
 
-  Plant({
-    required this.plantId,
-    required this.name,
-    this.imageUrl,
-    this.description,
-  });
+//   Plant({
+//     required this.plantId,
+//     required this.name,
+//     this.imageUrl,
+//     this.description,
+//   });
 
-factory Plant.fromJson(Map<String, dynamic> json) {
-  return Plant(
-    plantId: json['plant_id'],
-    name: json['common_name'],
-    description: json['description'],
-    imageUrl: json['image_url'],
-  );
-}
+// factory Plant.fromJson(Map<String, dynamic> json) {
+//   return Plant(
+//     plantId: json['plant_id'],
+//     name: json['common_name'],
+//     description: json['description'],
+//     imageUrl: json['image_url'],
+//   );
+// }
 
-}
+// }
 
 class FindPlantsPage extends StatefulWidget {
   const FindPlantsPage({super.key});
