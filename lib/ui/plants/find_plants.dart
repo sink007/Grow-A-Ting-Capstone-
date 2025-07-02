@@ -1,6 +1,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:grow_a_ting/ui/plant_detail/plant_detail.dart';
 import 'package:http/http.dart' as http;
 import 'package:grow_a_ting/model/plant_model.dart';
 import 'dart:convert';
@@ -235,6 +236,12 @@ class PlantCard extends StatelessWidget {
         onTap: () {
           // Navigate to plant details page
           // Navigator.push(context, MaterialPageRoute(builder: (context) => PlantDetailsPage(plant: plant)));
+             Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => PlantDetailsPage(plant: plant)
+            )
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Column(
