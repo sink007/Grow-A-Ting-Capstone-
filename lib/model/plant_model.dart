@@ -31,7 +31,9 @@ class Plant {
     return Plant(
       plantId: json['plant_id'],
       name: json['common_name'],
-      scientificName: json['scientific_name'],
+      scientificName: json['scientific_name'] != null
+         ? json['scientific_name'].toString().split("'")[0].trim()
+         : null,      
       imageUrl: json['image_url'],
       description: json['description'],
       water: json['water'],

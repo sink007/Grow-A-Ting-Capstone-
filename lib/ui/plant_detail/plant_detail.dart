@@ -1,5 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:grow_a_ting/model/plant_model.dart'; // Add this import
+import 'package:grow_a_ting/model/plant_model.dart'; 
+import 'dart:ui';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
+
+
 
 class PlantDetailsPage extends StatelessWidget {
   final Plant plant;
@@ -22,45 +28,56 @@ class PlantDetailsPage extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: Colors.black),
               onPressed: () => Navigator.pop(context),
             ),
+            title: const Text(
+              'Add Plant',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            centerTitle: true,
             actions: [
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.black),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                margin: const EdgeInsets.only(top: 100, left: 20, right: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.grey[200],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          plant.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(
-                                Icons.local_florist,
-                                size: 80,
-                                color: Colors.green,
-                              ),
-                            );
-                          },
-                        )
-                      : const Center(
-                          child: Icon(
-                            Icons.local_florist,
-                            size: 80,
-                            color: Colors.green,
+           flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              margin: const EdgeInsets.only(top: 100), 
+              child: Center(
+                child: Container(
+                  width: 260,
+                  height: 260, // square
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.grey[200],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            plant.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.local_florist,
+                                  size: 80,
+                                  color: Colors.green,
+                                ),
+                              );
+                            },
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.local_florist,
+                              size: 80,
+                              color: Colors.green,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
             ),
+          ),
           ),
           
           // Content
@@ -74,7 +91,7 @@ class PlantDetailsPage extends StatelessWidget {
                   Text(
                     plant.name,
                     style: const TextStyle(
-                      fontSize: 32,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
@@ -83,16 +100,9 @@ class PlantDetailsPage extends StatelessWidget {
                   
                   // Description
                   if (plant.description != null)
-                    Text(
-                      plant.description!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                        height: 1.5,
-                      ),
-                    ),
-                  
-                  const SizedBox(height: 40),
+                    PlantDescription(description: plant.description!),
+
+                  const SizedBox(height: 20),
                   
                   // Scheduling section
                   if (plant.growthStages.isNotEmpty) ...[
@@ -113,43 +123,48 @@ class PlantDetailsPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
-                        children: plant.growthStages.map((stage) {
-                          return Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    stage.week,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: plant.growthStages.map((stage) {
+                        return Flexible(
+                          child: Container(
+                            height: 195, // makes each box taller
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.all(16), // more breathing space
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  stage.week,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.green,
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded( // allows more space for description
+                                  child: Text(
                                     stage.description,
                                     style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
+                                      fontSize: 12,
+                                      color: Colors.black,
                                       height: 1.3,
                                     ),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
+                                    overflow: TextOverflow.fade,
+                                    softWrap: true,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
                     ),
                     
                     const SizedBox(height: 40),
@@ -165,7 +180,7 @@ class PlantDetailsPage extends StatelessWidget {
                         color: Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 5),
                     
                     // Tools grid
                     GridView.builder(
@@ -173,7 +188,7 @@ class PlantDetailsPage extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 2.8,
+                        childAspectRatio: 2.0,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                       ),
@@ -183,16 +198,16 @@ class PlantDetailsPage extends StatelessWidget {
                         return Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
+                            border: Border.all(color: Colors.green),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 _getIconForTool(tool.icon ?? tool.name),
                                 size: 20,
-                                color: Colors.black,
+                                color: Colors.green,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -203,8 +218,8 @@ class PlantDetailsPage extends StatelessWidget {
                                     Text(
                                       tool.name,
                                       style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
                                         color: Colors.black,
                                       ),
                                       maxLines: 1,
@@ -214,11 +229,11 @@ class PlantDetailsPage extends StatelessWidget {
                                       Text(
                                         tool.description!,
                                         style: const TextStyle(
-                                          fontSize: 9,
-                                          color: Colors.grey,
+                                          fontSize: 12,
+                                          color: Colors.black,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        // maxLines: 1,
+                                        // overflow: TextOverflow.ellipsis,
                                       ),
                                   ],
                                 ),
@@ -229,7 +244,7 @@ class PlantDetailsPage extends StatelessWidget {
                       },
                     ),
                     
-                    const SizedBox(height: 100), // Space for bottom button
+                    const SizedBox(height: 20), // Space for bottom button
                   ],
                 ],
               ),
@@ -237,97 +252,60 @@ class PlantDetailsPage extends StatelessWidget {
           ),
         ],
       ),
-      
-      // Bottom navigation and Add to Garden button
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Add to Garden button
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: () {
-                _addToGarden(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Add to Garden',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          
-          // Bottom navigation bar
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(Icons.home, 'Home', false),
-                    _buildNavItem(Icons.calendar_today, 'Tasks', false),
-                    _buildNavItem(Icons.book, 'Diary', false),
-                    _buildNavItem(Icons.check_circle, 'Check Up', true),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+     bottomNavigationBar: ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
       ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.8), // More opaque white
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: () {
+              addToGarden(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Add to Garden',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 24,
-          color: isActive ? Colors.green : Colors.grey,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isActive ? Colors.green : Colors.grey,
-            fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
+
+
 
   IconData _getIconForTool(String toolIdentifier) {
     final tool = toolIdentifier.toLowerCase();
@@ -346,10 +324,108 @@ class PlantDetailsPage extends StatelessWidget {
     }
   }
 
-  void _addToGarden(BuildContext context) {
-    // TODO: Implement add to garden functionality
-    // This would typically make an API call to add the plant to user's garden
+  // void _addToGarden(BuildContext context) {
+  //   // TODO: Implement add to garden functionality
+  //   // This would typically make an API call to add the plant to user's garden
     
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('${plant.name} added to your garden!'),
+  //       backgroundColor: Colors.green,
+  //       behavior: SnackBarBehavior.floating,
+  //       shape: RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.circular(10),
+  //       ),
+  //       margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+  //     ),
+  //   );
+    
+  //   Navigator.pop(context);
+  // }
+// Future<void> addToGarden(BuildContext context) async {
+//   try {
+//     final user = Supabase.instance.client.auth.currentUser;
+//     if (user == null) {
+//       throw Exception('User not authenticated');
+//     }
+    
+//     // Make API call to your backend
+//     final response = await http.post(
+//       Uri.parse('http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}'),
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//     );
+    
+//     if (response.statusCode != 201) {
+//       throw Exception('API call failed with status: ${response.statusCode}');
+//     }
+    
+//     if (!context.mounted) return;
+    
+//     // Show success message
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text('${plant.name} added to your garden!'),
+//         backgroundColor: Colors.green,
+//         behavior: SnackBarBehavior.floating,
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(10),
+//         ),
+//         margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+//       ),
+//     );
+    
+//     Navigator.pop(context);
+//   } catch (e) {
+//     if (!context.mounted) return;
+    
+//     // Handle errors
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text('Failed to add ${plant.name} to your garden: ${e.toString()}'),
+//         backgroundColor: Colors.red,
+//         behavior: SnackBarBehavior.floating,
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(10),
+//         ),
+//         margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+//       ),
+//     );
+//   }
+// }
+
+
+Future<void> addToGarden(BuildContext context) async {
+  try {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+    
+
+    
+    // Print debugging info
+    print('User ID: ${user.id}');
+    print('Plant ID: ${plant.plantId}');
+    print('POST URL: http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}');
+    print('User role: ${user.role}');
+
+    // Make API call to your backend
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+    
+    if (response.statusCode != 201) {
+      throw Exception('API call failed with status: ${response.statusCode}');
+    }
+    
+    if (!context.mounted) return;
+    
+    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${plant.name} added to your garden!'),
@@ -363,5 +439,79 @@ class PlantDetailsPage extends StatelessWidget {
     );
     
     Navigator.pop(context);
+  } catch (e) {
+    if (!context.mounted) return;
+    
+    // Handle errors
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to add ${plant.name} to your garden: ${e.toString()}'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+}
+
+
+class PlantDescription extends StatefulWidget {
+  final String description;
+
+  const PlantDescription({super.key, required this.description});
+
+  @override
+  State<PlantDescription> createState() => _PlantDescriptionState();
+}
+
+class _PlantDescriptionState extends State<PlantDescription> {
+  bool _expanded = false;
+
+  String get _truncatedText {
+    final sentences = widget.description.split(RegExp(r'(?<=[.!?])\s+'));
+    if (sentences.length <= 2) return widget.description;
+    return '${sentences.take(2).join(' ')}...';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+          height: 1.5,
+        ),
+        children: [
+          TextSpan(text: _expanded ? widget.description : _truncatedText),
+          if (widget.description.split(RegExp(r'(?<=[.!?])\s+')).length > 2)
+            TextSpan(
+              text: _expanded ? ' Read less' : ' Read more',
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  setState(() {
+                    _expanded = !_expanded;
+                  });
+                },
+            ),
+        ],
+      ),
+    );
   }
 }

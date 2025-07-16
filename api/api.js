@@ -1,9 +1,4 @@
-// const express = require("express");
-// const multer = require("multer");
-// const fetch = require("node-fetch");
-// const FormData = require("form-data");
-// const { createClient } = require("@supabase/supabase-js");
-// require("dotenv").config();
+
 import express from "express";
 import multer from "multer";
 import fetch from "node-fetch";
@@ -113,15 +108,70 @@ app.get('/retrieve/:image_id', async (req, res) => {
   }
 });
 
+// app.get('/user/:user_id/plants', async (req, res) => {
+//   try {
+//     const { user_id } = req.params;
+//     const { data } = await supabase
+//       .from('user_plants')
+//       .select('user_plant_id, date, plant:plant_id ( plant_id, name, description, image_id )')
+//       .eq('user_id', user_id);
+//     res.status(200).json(data);
+//   } catch {
+//     res.status(500).send('Failed to retrieve user plants.');
+//   }
+// });
+
+// app.get('/user/:user_id/plants', async (req, res) => {
+//   try {
+//     const { user_id } = req.params;
+//     const { data, error } = await supabase
+//       .from('user_plants')
+//       .select(`
+//         user_plant_id,
+//         date,
+//         plant (
+//           plant_id,
+//           scientific_name,
+//           description,
+//           image_url,
+//           common_name,
+//           watering,
+//           sunlight
+      
+//         )
+//       `)
+//       .eq('user_id', user_id);
+
+//     if (error) {
+//       console.error('Supabase error:', error);
+//       return res.status(500).json({ error: error.message });
+//     }
+
+//     res.status(200).json(data);
+//   } catch (error) {
+//     console.error('Catch error:', error);
+//     res.status(500).send('Failed to retrieve user plants.');
+//   }
+// });
+
 app.get('/user/:user_id/plants', async (req, res) => {
   try {
     const { user_id } = req.params;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_plants')
-      .select('user_plant_id, date, plant:plant_id ( plant_id, name, description, image_id )')
+      .select('user_plant_id, date, plant_id (common_name, scientific_name, description, image_url, watering, watering_condition, pruning, sunlight, growth_stages, tools_needed)')
       .eq('user_id', user_id);
+
+    if (error) {
+      throw error;  // Handle Supabase errors
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).send('No plants found for this user.');
+    }
+
     res.status(200).json(data);
-  } catch {
+  } catch (err) {
     res.status(500).send('Failed to retrieve user plants.');
   }
 });
@@ -197,16 +247,90 @@ app.get('/user/:user_id/diagnoses', async (req, res) => {
   }
 });
 
+// app.post('/user/:user_id/plant/:plant_id', async (req, res) => {
+//   try {
+//     const { user_id, plant_id } = req.params;
+//     await supabase.from('user_plants').insert([{ user_id, plant_id, date: new Date().toISOString() }]);
+//     res.status(201).send('Plant added to user.');
+//   } catch {
+//     res.status(500).send('Failed to add plant to user.');
+//   }
+// });
 app.post('/user/:user_id/plant/:plant_id', async (req, res) => {
+  console.log('🔥 Route hit: POST /user/:user_id/plant/:plant_id');
   try {
     const { user_id, plant_id } = req.params;
-    await supabase.from('user_plants').insert([{ user_id, plant_id, date: new Date().toISOString() }]);
-    res.status(201).send('Plant added to user.');
-  } catch {
-    res.status(500).send('Failed to add plant to user.');
+    
+    console.log('Attempting to insert:', { user_id, plant_id });
+    
+    const { data, error } = await supabase
+      .from('user_plants')
+      .insert([{ 
+        user_id: user_id,
+        plant_id: parseInt(plant_id),
+        date: new Date().toISOString() 
+      }]);
+    
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ 
+        error: 'Database error', 
+        details: error.message 
+      });
+    }
+    console.log('Supabase insert error details:', JSON.stringify(error, null, 2));
+
+    console.log('Insert successful:', data);
+    res.status(201).json({ 
+      message: 'Plant added to user successfully',
+      data: data 
+    });
+    
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: err.message 
+    });
   }
 });
 
+// app.post('/user/:user_id/plant/:plant_id', async (req, res) => {
+//   try {
+//     const { user_id, plant_id } = req.params;
+    
+//     console.log('Attempting to insert:', { user_id, plant_id });
+    
+//     const { data, error } = await supabase
+//       .from('user_plants')
+//       .insert([{ 
+//         user_id, 
+//         plant_id: parseInt(plant_id), // Make sure plant_id is an integer
+//         date: new Date().toISOString() 
+//       }]);
+    
+//     if (error) {
+//       console.error('Supabase error:', error);
+//       return res.status(500).json({ 
+//         error: 'Database error', 
+//         details: error.message 
+//       });
+//     }
+    
+//     console.log('Insert successful:', data);
+//     res.status(201).json({ 
+//       message: 'Plant added to user successfully',
+//       data: data 
+//     });
+    
+//   } catch (err) {
+//     console.error('Server error:', err);
+//     res.status(500).json({ 
+//       error: 'Server error', 
+//       details: err.message 
+//     });
+//   }
+// });
 
 
 //Still Not Fixed, Attempting to use = error

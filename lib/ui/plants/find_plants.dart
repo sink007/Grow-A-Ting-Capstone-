@@ -6,31 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:grow_a_ting/model/plant_model.dart';
 import 'dart:convert';
 
-// Plant model to structure the data
-// class Plant {
-//   final int plantId;
-//   final String name;
-//   final String? imageUrl;
-//   final String? description;
-
-//   Plant({
-//     required this.plantId,
-//     required this.name,
-//     this.imageUrl,
-//     this.description,
-//   });
-
-// factory Plant.fromJson(Map<String, dynamic> json) {
-//   return Plant(
-//     plantId: json['plant_id'],
-//     name: json['common_name'],
-//     description: json['description'],
-//     imageUrl: json['image_url'],
-//   );
-// }
-
-// }
-
 class FindPlantsPage extends StatefulWidget {
   const FindPlantsPage({super.key});
 
@@ -145,7 +120,10 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
                       decoration: const InputDecoration(
                         icon: Icon(Icons.search, color: Colors.grey),
                         hintText: 'Search plants',
-                        border: InputBorder.none,
+                        hintStyle: TextStyle(
+                        color: Colors.grey, 
+                      ),        
+                      border: InputBorder.none,
                       ),
                     ),
                   ),
@@ -162,7 +140,7 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
                   ),
                   child: const Icon(
                     Icons.tune,
-                    color: Colors.black,
+                    color: Colors.grey,
                   ),
                 ),
               ],
@@ -219,28 +197,288 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
   }
 }
 
+// class PlantCard extends StatelessWidget {
+//   final Plant plant;
+
+//   const PlantCard({super.key, required this.plant});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Card(
+//       color: Colors.white,
+//       elevation: 2,
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(16),
+//       ),
+//       child: InkWell(
+//         onTap: () {
+//           // Navigate to plant details page
+//           // Navigator.push(context, MaterialPageRoute(builder: (context) => PlantDetailsPage(plant: plant)));
+//              Navigator.push(
+//             context, 
+//             MaterialPageRoute(
+//               builder: (context) => PlantDetailsPage(plant: plant)
+//             )
+//           );
+//         },
+//         borderRadius: BorderRadius.circular(16),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // Plant image
+//             Expanded(
+//               flex: 3,
+//               child: Container(
+//                 width: double.infinity,
+//                 decoration: BoxDecoration(
+//                   borderRadius: const BorderRadius.only(
+//                     topLeft: Radius.circular(16),
+//                     topRight: Radius.circular(16),
+//                   ),
+//                   color: Colors.grey[200],
+//                 ),
+//                 child: ClipRRect(
+//                   borderRadius: const BorderRadius.only(
+//                     topLeft: Radius.circular(16),
+//                     topRight: Radius.circular(16),
+//                   ),
+//                   child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
+//                       ? Image.network(
+//                           plant.imageUrl!,
+//                           fit: BoxFit.cover,
+//                           errorBuilder: (context, error, stackTrace) {
+//                             return const Icon(
+//                               Icons.local_florist,
+//                               size: 40,
+//                               color: Colors.green,
+//                             );
+//                           },
+//                         )
+//                       : const Icon(
+//                           Icons.local_florist,
+//                           size: 40,
+//                           color: Colors.green,
+//                         ),
+//                 ),
+//               ),
+//             ),
+            
+//             // Plant info
+//             Expanded(
+//               flex: 2,
+//               child: Padding(
+//                 padding: const EdgeInsets.all(12),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     // Plant name
+//                     Text(
+//                       plant.name,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.w600,
+//                         color: Color(0xFF025A1E),
+//                       ),
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                     ),
+//                     const SizedBox(height: 4),
+                   
+//                     // Add button
+//                     const Spacer(),
+//                     Align(
+//                       alignment: Alignment.centerRight,
+//                       child: Container(
+//                         width: 24,
+//                         height: 24,
+//                         decoration: BoxDecoration(
+//                           color: Colors.green,
+//                           borderRadius: BorderRadius.circular(12),
+//                         ),
+//                         child: const Icon(
+//                           Icons.add,
+//                           color: Colors.white,
+//                           size: 16,
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+// class PlantCard extends StatelessWidget {
+//   final Plant plant;
+
+//   const PlantCard({super.key, required this.plant});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Card(
+//       elevation: 4,
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(16),
+//       ),
+//       shadowColor: Colors.black.withOpacity(0.1),
+//       child: InkWell(
+//         onTap: () {
+//           Navigator.push(
+//             context,
+//             MaterialPageRoute(
+//               builder: (context) => PlantDetailsPage(plant: plant),
+//             ),
+//           );
+//         },
+//         borderRadius: BorderRadius.circular(16),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // Plant image
+//             Expanded(
+//               flex: 3,
+//               child: Container(
+//                 width: double.infinity,
+//                 decoration: BoxDecoration(
+//                   borderRadius: const BorderRadius.only(
+//                     topLeft: Radius.circular(16),
+//                     topRight: Radius.circular(16),
+//                   ),
+//                   gradient: const LinearGradient(
+//                     colors: [Color(0xFFEAFBE4), Color(0xFFD0EAC9)],
+//                     begin: Alignment.topCenter,
+//                     end: Alignment.bottomCenter,
+//                   ),
+//                 ),
+//                 child: ClipRRect(
+//                   borderRadius: const BorderRadius.only(
+//                     topLeft: Radius.circular(16),
+//                     topRight: Radius.circular(16),
+//                   ),
+//                   child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
+//                       ? Image.network(
+//                           plant.imageUrl!,
+//                           fit: BoxFit.cover,
+//                           errorBuilder: (context, error, stackTrace) {
+//                             return const Icon(
+//                               Icons.local_florist,
+//                               size: 40,
+//                               color: Colors.green,
+//                             );
+//                           },
+//                         )
+//                       : const Icon(
+//                           Icons.local_florist,
+//                           size: 40,
+//                           color: Colors.green,
+//                         ),
+//                 ),
+//               ),
+//             ),
+
+//             // Plant info
+//             Expanded(
+//               flex: 2,
+//               child: Padding(
+//                 padding: const EdgeInsets.all(12),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     // Plant name
+//                     Text(
+//                       plant.name,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.w600,
+//                         color: Color(0xFF025A1E),
+//                       ),
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                     ),
+//                     const SizedBox(height: 4),
+
+//                     // Scientific name
+//                      if (plant.scientificName != null)
+//                         Text(plant.scientificName!,                    
+//                         style: const TextStyle(
+//                         fontSize: 13,
+//                         fontStyle: FontStyle.italic,
+//                         color: Color(0xFF4B7742),
+//                       ),
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                     ),
+
+//                     const Spacer(),
+
+//                     // Add button
+//                     Align(
+//                       alignment: Alignment.centerRight,
+//                       child: Container(
+//                         width: 24,
+//                         height: 24,
+//                         decoration: BoxDecoration(
+//                           color: Colors.green,
+//                           borderRadius: BorderRadius.circular(12),
+//                         ),
+//                         child: const Icon(
+//                           Icons.add,
+//                           color: Colors.white,
+//                           size: 16,
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class PlantCard extends StatelessWidget {
   final Plant plant;
-
+  
   const PlantCard({super.key, required this.plant});
+
+  // Helper method to wrap text if more than 2 words
+  List<String> _wrapTextIfNeeded(String text) {
+    List<String> words = text.split(' ');
+    if (words.length > 2) {
+      return [words[0], words.sublist(1).join(' ')];
+    }
+    return [text];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 4,
       color: Colors.white,
-      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(
+          color: Colors.grey,
+          width: 1,
+        ),
       ),
+      shadowColor: Colors.black.withOpacity(0.1),
       child: InkWell(
         onTap: () {
-          // Navigate to plant details page
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => PlantDetailsPage(plant: plant)));
-             Navigator.push(
-            context, 
+          Navigator.push(
+            context,
             MaterialPageRoute(
-              builder: (context) => PlantDetailsPage(plant: plant)
-            )
+              builder: (context) => PlantDetailsPage(plant: plant),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(16),
@@ -252,12 +490,11 @@ class PlantCard extends StatelessWidget {
               flex: 3,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
                   ),
-                  color: Colors.grey[200],
                 ),
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(
@@ -269,87 +506,90 @@ class PlantCard extends StatelessWidget {
                           plant.imageUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.local_florist,
-                              size: 40,
-                              color: Colors.green,
+                            return Container(
+                              color: const Color(0xFFF5F5F5),
+                              child: const Icon(
+                                Icons.local_florist,
+                                size: 40,
+                                color: Colors.green,
+                              ),
                             );
                           },
                         )
-                      : const Icon(
-                          Icons.local_florist,
-                          size: 40,
-                          color: Colors.green,
+                      : Container(
+                          color: const Color(0xFFF5F5F5),
+                          child: const Icon(
+                            Icons.local_florist,
+                            size: 40,
+                            color: Colors.green,
+                          ),
                         ),
                 ),
               ),
             ),
-            
+
             // Plant info
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Plant name
-                    Text(
-                      plant.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF025A1E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    
-                    // Plant tags
-                    // if (plant.tags.isNotEmpty)
-                    //   Expanded(
-                    //     child: Wrap(
-                    //       spacing: 4,
-                    //       runSpacing: 2,
-                    //       children: plant.tags.take(2).map((tag) => Container(
-                    //         padding: const EdgeInsets.symmetric(
-                    //           horizontal: 6,
-                    //           vertical: 2,
-                    //         ),
-                    //         decoration: BoxDecoration(
-                    //           color: Colors.green.shade100,
-                    //           borderRadius: BorderRadius.circular(8),
-                    //         ),
-                    //         child: Text(
-                    //           tag,
-                    //           style: TextStyle(
-                    //             fontSize: 10,
-                    //             color: Colors.green.shade700,
-                    //           ),
-                    //         ),
-                    //       )).toList(),
-                    //     ),
-                    //   ),
-                    
-                    // Add button
-                    const Spacer(),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
+                    // Plant name and add button row
+                    Row(
+                      children: [
+                        // Plant name
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...(_wrapTextIfNeeded(plant.name).map((line) => 
+                                Text(
+                                  line,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF025A1E),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              )),
+                            ],
+                          ),
                         ),
-                        child: const Icon(
+                        
+                        // Add button
+                        const Icon(
                           Icons.add,
-                          color: Colors.white,
-                          size: 16,
+                          color: Colors.black,
+                          size: 20,
                         ),
-                      ),
+                      ],
                     ),
+                    
+                    const SizedBox(height: 4),
+
+                    // Scientific name
+                    if (plant.scientificName != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...(_wrapTextIfNeeded(plant.scientificName!).map((line) => 
+                            Text(
+                              line,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                                color: Color(0xFF4B7742),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          )),
+                        ],
+                      ),
                   ],
                 ),
               ),
