@@ -1,7 +1,7 @@
 // Plant model to structure the data
 class Plant {
   final int plantId;
-  final String name;
+  final String commonName;
   final String? scientificName;
   final String? imageUrl;
   final String? description;
@@ -16,7 +16,7 @@ class Plant {
 
   Plant({
     required this.plantId,
-    required this.name,
+    required this.commonName,
     this.scientificName,
     this.imageUrl,
     this.description,
@@ -27,16 +27,25 @@ class Plant {
     this.toolsNeeded = const [],
   });
 
-  factory Plant.fromJson(Map<String, dynamic> json) {
+factory Plant.fromJson(Map<String, dynamic> json) {
+  // print('=== Plant.fromJson Debug ===');
+  // print('Received json:  ${json['plant_id']}');
+  // print('json type: ${json.runtimeType}');
+  
+  // // ignore: unnecessary_null_comparison
+  // if (json == null) {
+  //   print('ERROR: json is null!');
+  //   throw Exception('Plant JSON is null');
+  // }
     return Plant(
       plantId: json['plant_id'],
-      name: json['common_name'],
+      commonName: json['common_name'],
       scientificName: json['scientific_name'] != null
          ? json['scientific_name'].toString().split("'")[0].trim()
          : null,      
       imageUrl: json['image_url'],
       description: json['description'],
-      water: json['water'],
+      water: json['watering'],
       sunlight: json['sunlight'],
       type: json['type'],
       growthStages: json['growth_stages'] != null
@@ -52,6 +61,7 @@ class Plant {
     );
   }
 }
+
 
 class GrowthStage {
   final String week;

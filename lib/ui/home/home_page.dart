@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/weather_card.dart';
+import '../../model/plant.dart'; 
+import '../../model/user_plant.dart'; 
 import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
@@ -18,48 +19,45 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? weatherData;
-  bool isLoading = true;
-  String? errorMessage;
+  bool isLoadingWeather = true;
+  String? weatherErrorMessage;
 
+  List<UserPlant> userPlants = [];
+  bool isLoadingPlants = false;
 
-// Add these state variables in your class
-List<Map<String, dynamic>> userPlants = [];
-bool isLoadingPlants = false;
-
-// Add this method to fetch user plants
-Future<void> _fetchUserPlants() async {
-  setState(() {
-    isLoadingPlants = true;
-    
-  });
-
-  try {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-
-    final response = await http.get(
-      Uri.parse('http://10.0.2.2:3000/user/${user.id}/plants'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      setState(() {
-        userPlants = data.cast<Map<String, dynamic>>();
-      });
-    } else {
-      print('Failed to load plants: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error fetching plants: $e');
-  } finally {
+  Future<void> _fetchUserPlants() async {
     setState(() {
-      isLoadingPlants = false;
+      isLoadingPlants = true;
     });
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/user/${user.id}/plants'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        
+        setState(() {
+          userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
+        });
+      } else {
+        print('Failed to load plants: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching plants: $e');
+    } finally {
+      setState(() {
+        isLoadingPlants = false;
+      });
+    }
   }
-}
 
   @override
   void initState() {
@@ -78,14 +76,14 @@ Future<void> _fetchUserPlants() async {
 
       setState(() {
         weatherData = data;
-        isLoading = false;
-        errorMessage = null;
+        isLoadingWeather = false;
+        weatherErrorMessage = null;
       });
     } catch (e) {
       print('Error fetching weather: $e');
       setState(() {
-        isLoading = false;
-        errorMessage = e.toString();
+        isLoadingWeather = false;
+        weatherErrorMessage = e.toString();
       });
     }
   }
@@ -93,7 +91,6 @@ Future<void> _fetchUserPlants() async {
   Future<LocationData> _getCurrentLocation() async {
     Location location = Location();
 
-    // Check if location service is enabled
     bool serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
@@ -102,7 +99,6 @@ Future<void> _fetchUserPlants() async {
       }
     }
 
-    // Check for permissions
     PermissionStatus permissionGranted = await location.hasPermission();
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
@@ -111,7 +107,6 @@ Future<void> _fetchUserPlants() async {
       }
     }
 
-    // Get the current location
     return await location.getLocation();
   }
 
@@ -119,19 +114,19 @@ Future<void> _fetchUserPlants() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-       titleSpacing: 0,
+        titleSpacing: 0,
         title: RichText(
           text: const TextSpan(
-            style:  TextStyle(
+            style: TextStyle(
               fontSize: 24,
-              fontWeight: FontWeight.w500, // Medium-bold
+              fontWeight: FontWeight.w500,
             ),
             children: [
-               TextSpan(
+              TextSpan(
                 text: 'Yaad ',
                 style: TextStyle(color: Colors.black),
               ),
-               TextSpan(
+              TextSpan(
                 text: 'Garden',
                 style: TextStyle(color: Color(0xFF025A1E)),
               ),
@@ -143,56 +138,90 @@ Future<void> _fetchUserPlants() async {
           icon: const Icon(Icons.menu, color: Colors.black),
           onPressed: () {},
         ),
-        
       ),
-      body: isLoading
-    ? const Center(child: CircularProgressIndicator())
-    : errorMessage != null
-        ? _buildErrorWidget()
-        : weatherData == null
-            ? const Center(child: Text('No weather data available'))
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildWeatherContent(),
-                    _buildMyPlantsSection(),
-                  ],
-                ),
-    ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWeatherSection(),
+            _buildMyPlantsSection(),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+  Widget _buildWeatherSection() {
+    if (isLoadingWeather) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (weatherErrorMessage != null) {
+      return _buildWeatherErrorWidget();
+    }
+
+    if (weatherData == null) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: Text('No weather data available'),
+        ),
+      );
+    }
+
+    return _buildWeatherContent();
+  }
+
+  Widget _buildWeatherErrorWidget() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 254, 243, 244),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red[200]!),
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Unable to get weather data',
-              style: Theme.of(context).textTheme.headlineSmall,
+            Image.asset(
+            'assets/images/no-internet.png',
+            width: 60,
+            height: 60,
+          ),
+
+            const SizedBox(height: 12),
+            const Text(
+              'Lost in the weeds—no signal!',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF399942),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              _getErrorMessage(errorMessage!),
-              style: Theme.of(context).textTheme.bodyMedium,
+              _getErrorMessage(weatherErrorMessage!),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  isLoading = true;
-                  errorMessage = null;
+                  isLoadingWeather = true;
+                  weatherErrorMessage = null;
                 });
                 fetchWeather();
               },
@@ -203,35 +232,27 @@ Future<void> _fetchUserPlants() async {
       ),
     );
   }
-Widget _buildWeatherContent() {
-  final weatherCondition = weatherData!['weather'][0]['main'];
-  final weatherIconPath = _getWeatherIconPath(weatherCondition);
 
-  return Padding(
-    padding: const EdgeInsets.all(16),
-    child: SingleChildScrollView(
-      child: Column(
-        children: [
-          // Weather card
-          WeatherCard(
-            date: DateFormat('EEEE, d MMM').format(DateTime.now()),
-            location: weatherData!['name'] ?? 'Your Garden',
-            weatherDescription: weatherData!['weather'][0]['description'],
-            temperature: '${weatherData!['main']['temp'].round()}°C',
-            humidity: '${weatherData!['main']['humidity']}%',
-            windSpeed: '${weatherData!['wind']['speed']} m/s',
-            weatherIcon: Image.asset(
-              weatherIconPath,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
+  Widget _buildWeatherContent() {
+    final weatherCondition = weatherData!['weather'][0]['main'];
+    final weatherIconPath = _getWeatherIconPath(weatherCondition);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: WeatherCard(
+        date: DateFormat('EEEE, d MMM').format(DateTime.now()),
+        location: weatherData!['name'] ?? 'Your Garden',
+        weatherDescription: weatherData!['weather'][0]['description'],
+        temperature: '${weatherData!['main']['temp'].round()}°C',
+        humidity: '${weatherData!['main']['humidity']}%',
+        windSpeed: '${weatherData!['wind']['speed']} m/s',
+        weatherIcon: Image.asset(
+          weatherIconPath,
+          fit: BoxFit.contain,
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   String _getErrorMessage(String error) {
     if (error.contains('Location services are disabled')) {
@@ -244,351 +265,284 @@ Widget _buildWeatherContent() {
       return 'Something went wrong. Please try again.';
     }
   }
-  
+
   String _getWeatherIconPath(String condition) {
-  switch (condition) {
-    case 'Clear':
-      return 'assets/images/clear.png';
-    case 'Clouds':
-      return 'assets/images/clouds.png';
-    case 'Rain':
-      return 'assets/images/rain.png';
-    case 'Drizzle':
-      return 'assets/images/rain.png';
-    case 'Thunderstorm':
-      return 'assets/images/thunderstorm.png';
-    case 'Snow':
-      return 'assets/images/snow.png';
-    case 'Mist':
-    case 'Fog':
-    case 'Haze':
-      return 'assets/images/fog.png';
-    default:
-      return 'assets/images/clouds.png';
+    switch (condition) {
+      case 'Clear':
+        return 'assets/images/clear.png';
+      case 'Clouds':
+        return 'assets/images/clouds.png';
+      case 'Rain':
+        return 'assets/images/rain.png';
+      case 'Drizzle':
+        return 'assets/images/rain.png';
+      case 'Thunderstorm':
+        return 'assets/images/thunderstorm.png';
+      case 'Snow':
+        return 'assets/images/snow.png';
+      case 'Mist':
+      case 'Fog':
+      case 'Haze':
+        return 'assets/images/fog.png';
+      default:
+        return 'assets/images/clouds.png';
+    }
   }
-}
 
+  // Helper method using UserPlant wrapper
+  String _calculatePlantAge(DateTime plantedDate) {
+    final DateTime now = DateTime.now();
+    final int daysDiff = now.difference(plantedDate).inDays;
+    final int weeks = daysDiff ~/ 7;
 
-  
-// Helper method to calculate plant age
-String _calculatePlantAge(String plantDate) {
-  final DateTime planted = DateTime.parse(plantDate);
-  final DateTime now = DateTime.now();
-  final int daysDiff = now.difference(planted).inDays;
-  final int weeks = daysDiff ~/ 7;
-  
-  if (weeks == 0) {
-    return '$daysDiff days old';
-  } else if (weeks == 1) {
-    return '1 week old';
-  } else {
-    return '$weeks weeks old';
+    if (weeks == 0) {
+      return '$daysDiff days old';
+    } else if (weeks == 1) {
+      return '1 week old';
+    } else {
+      return '$weeks weeks old';
+    }
   }
-}
 
-// Helper method to get watering info from plant data
-String _getWateringInfo(Map<String, dynamic> plantData) {
-  final watering = plantData['watering'];
-  if (watering == null) return 'Unknown';
-  return watering.toString();
-}
+  // Helper methods using Plant model for nested plant data
+  String _getWateringInfo(Plant plant) {
+    return plant.water ?? 'Unknown';
+  }
 
-// Helper method to get sunlight info from plant data
-String _getSunlightInfo(Map<String, dynamic> plantData) {
-  final sunlight = plantData['sunlight'];
-  if (sunlight == null) return 'Unknown';
-  return sunlight.toString();
-}
+  String _getSunlightInfo(Plant plant) {
+    return plant.sunlight ?? 'Unknown';
+  }
 
-// Updated My Plants Section
-Widget _buildMyPlantsSection() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'My Plants',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, '/plants/find');
-              },
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF399942),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 24,
+  // Updated My Plants Section with proper models
+  Widget _buildMyPlantsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'My Plants',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        
-        // Loading state
-        if (isLoadingPlants)
-          const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF399942),
-            ),
-          )
-        
-        // Plants grid
-        else if (userPlants.isNotEmpty)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1,
-              childAspectRatio: 2, // Controls height
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              
-            ),
-            itemCount: userPlants.length,
-            itemBuilder: (context, index) {
-              final userPlant = userPlants[index];
-              final plant = userPlant['plant'];
-              
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/plants/find');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF399942),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // Plant Image
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          height: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD3D3D3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: plant['image_url'] != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    plant['image_url'],
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Center(
-                                        child: Icon(
-                                          Icons.local_florist,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.local_florist,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(width: 25),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-                      // Plant Info
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Plant name
-                            Text(
-                              plant['common_name'] ?? plant['scientific_name'] ?? 'Unknown Plant',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
+          // Loading state
+          if (isLoadingPlants)
+            const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF399942),
+              ),
+            )
 
-                            // Age info
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 16, color: Colors.red),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _calculatePlantAge(userPlant['date']),
-                                    style: const TextStyle(fontSize: 12, color: Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
+          // Plants grid using UserPlant wrapper for clean access
+          else if (userPlants.isNotEmpty)
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 1,
+                childAspectRatio: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: userPlants.length,
+              itemBuilder: (context, index) {
+                final userPlant = userPlants[index];
+                final plant = userPlant.plant; // Clean access to Plant model
 
-                            // Watering info
-                            Row(
-                              children: [
-                                const Icon(Icons.water_drop, size: 16, color: Colors.blue),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _getWateringInfo(plant),
-                                    style: const TextStyle(fontSize: 12, color: Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-
-                            // Sunlight info
-                            Row(
-                              children: [
-                                const Icon(Icons.wb_sunny, size: 16, color: Colors.orange),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _getSunlightInfo(plant),
-                                    style: const TextStyle(fontSize: 12, color: Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 8,
+                        offset: Offset(0, 4), 
                       ),
                     ],
-                  )
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // Plant Image
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            height: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD3D3D3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: plant.imageUrl != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      plant.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons.local_florist,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : const Center(
+                                    child: Icon(
+                                      Icons.local_florist,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 25),
 
-                ),
-              );
-            },
-          )
-        
-        // Empty state
-        else
-          Center(
-            child: Column(
-              children: [
-                Image.asset(
-                  'assets/images/potted-plants.png',
-                  height: 220,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'No plants yet',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+                        // Plant Info
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              
+                              Text(
+                                plant.commonName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF399942),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Age info using UserPlant date
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today,
+                                      size: 16, color: Colors.red),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      _calculatePlantAge(userPlant
+                                          .date), // Clean access to user plant date
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+
+                              // Watering info using Plant model
+                              Row(
+                                children: [
+                                  const Icon(Icons.water_drop,
+                                      size: 16, color: Colors.blue),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'every ${_getWateringInfo(plant)}',
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+
+                              // Sunlight info using Plant model
+                              Row(
+                                children: [
+                                  const Icon(Icons.wb_sunny,
+                                      size: 16, color: Colors.orange),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      _getSunlightInfo(plant),
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Tap the + button to add your first plant!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                );
+              },
+            )
+
+          // Empty state
+          else
+            Center(
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/images/potted-plants.png',
+                    height: 220,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No plants yet',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap the + button to add your first plant!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
-          ),
-        
-        const SizedBox(height: 24),
-      ],
-    ),
-  );
-}
-  
-  // // My Plants Section
-  // Widget _buildMyPlantsSection() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             const Text(
-  //               'My Plants',
-  //               style: TextStyle(
-  //                 fontSize: 32,
-  //                 fontWeight: FontWeight.w500,
-  //               ),
-  //             ),
-  //             InkWell(
-  //               onTap: () {
-  //                  Navigator.pushNamed(context, '/plants/find');
-  //               },
-  //               child: Container(
-  //                 padding: const EdgeInsets.all(6),
-  //                 decoration: const BoxDecoration(
-  //                   color: Color(0xFF399942),
-  //                   shape: BoxShape.circle,
-  //                 ),
-  //                 child: const Icon(
-  //                   Icons.add,
-  //                   color: Colors.white,
-  //                   size: 24,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         const SizedBox(height: 24),
 
-  //         // Empty state placeholder for now
-  //         Center(
-  //           child: Column(
-  //             children: [
-  //               Image.asset(
-  //                 'assets/images/potted-plants.png', 
-  //                 height: 220,
-  //               ),
-  //               const SizedBox(height: 16),
-  //               const Text(
-  //                 'No plants yet',
-  //                 style: TextStyle(
-  //                   fontSize: 20,
-  //                   fontWeight: FontWeight.w500,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 8),
-  //               const Text(
-  //                 'Tap the + button to add your first plant!',
-  //                 style: TextStyle(
-  //                   fontSize: 14,
-  //                   color: Colors.grey,
-  //                 ),
-  //                 textAlign: TextAlign.center,
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         const SizedBox(height: 24),
-  //       ],
-  //     ),
-  //   );
-  // }
-  
-  
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 }

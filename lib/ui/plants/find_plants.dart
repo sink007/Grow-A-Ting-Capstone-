@@ -1,9 +1,7 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:grow_a_ting/ui/plant_detail/plant_detail.dart';
 import 'package:http/http.dart' as http;
-import 'package:grow_a_ting/model/plant_model.dart';
+import 'package:grow_a_ting/model/plant.dart';
 import 'dart:convert';
 
 class FindPlantsPage extends StatefulWidget {
@@ -61,7 +59,7 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
       filteredPlants = plants;
     } else {
       filteredPlants = plants.where((plant) {
-        return plant.name.toLowerCase().contains(query) ||
+        return plant.commonName.toLowerCase().contains(query) ||
                (plant.description?.toLowerCase().contains(query) ?? false);
       }).toList();
     }
@@ -197,254 +195,6 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
   }
 }
 
-// class PlantCard extends StatelessWidget {
-//   final Plant plant;
-
-//   const PlantCard({super.key, required this.plant});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       color: Colors.white,
-//       elevation: 2,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.circular(16),
-//       ),
-//       child: InkWell(
-//         onTap: () {
-//           // Navigate to plant details page
-//           // Navigator.push(context, MaterialPageRoute(builder: (context) => PlantDetailsPage(plant: plant)));
-//              Navigator.push(
-//             context, 
-//             MaterialPageRoute(
-//               builder: (context) => PlantDetailsPage(plant: plant)
-//             )
-//           );
-//         },
-//         borderRadius: BorderRadius.circular(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             // Plant image
-//             Expanded(
-//               flex: 3,
-//               child: Container(
-//                 width: double.infinity,
-//                 decoration: BoxDecoration(
-//                   borderRadius: const BorderRadius.only(
-//                     topLeft: Radius.circular(16),
-//                     topRight: Radius.circular(16),
-//                   ),
-//                   color: Colors.grey[200],
-//                 ),
-//                 child: ClipRRect(
-//                   borderRadius: const BorderRadius.only(
-//                     topLeft: Radius.circular(16),
-//                     topRight: Radius.circular(16),
-//                   ),
-//                   child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
-//                       ? Image.network(
-//                           plant.imageUrl!,
-//                           fit: BoxFit.cover,
-//                           errorBuilder: (context, error, stackTrace) {
-//                             return const Icon(
-//                               Icons.local_florist,
-//                               size: 40,
-//                               color: Colors.green,
-//                             );
-//                           },
-//                         )
-//                       : const Icon(
-//                           Icons.local_florist,
-//                           size: 40,
-//                           color: Colors.green,
-//                         ),
-//                 ),
-//               ),
-//             ),
-            
-//             // Plant info
-//             Expanded(
-//               flex: 2,
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     // Plant name
-//                     Text(
-//                       plant.name,
-//                       style: const TextStyle(
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.w600,
-//                         color: Color(0xFF025A1E),
-//                       ),
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                     const SizedBox(height: 4),
-                   
-//                     // Add button
-//                     const Spacer(),
-//                     Align(
-//                       alignment: Alignment.centerRight,
-//                       child: Container(
-//                         width: 24,
-//                         height: 24,
-//                         decoration: BoxDecoration(
-//                           color: Colors.green,
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                         child: const Icon(
-//                           Icons.add,
-//                           color: Colors.white,
-//                           size: 16,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-// class PlantCard extends StatelessWidget {
-//   final Plant plant;
-
-//   const PlantCard({super.key, required this.plant});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       elevation: 4,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.circular(16),
-//       ),
-//       shadowColor: Colors.black.withOpacity(0.1),
-//       child: InkWell(
-//         onTap: () {
-//           Navigator.push(
-//             context,
-//             MaterialPageRoute(
-//               builder: (context) => PlantDetailsPage(plant: plant),
-//             ),
-//           );
-//         },
-//         borderRadius: BorderRadius.circular(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             // Plant image
-//             Expanded(
-//               flex: 3,
-//               child: Container(
-//                 width: double.infinity,
-//                 decoration: BoxDecoration(
-//                   borderRadius: const BorderRadius.only(
-//                     topLeft: Radius.circular(16),
-//                     topRight: Radius.circular(16),
-//                   ),
-//                   gradient: const LinearGradient(
-//                     colors: [Color(0xFFEAFBE4), Color(0xFFD0EAC9)],
-//                     begin: Alignment.topCenter,
-//                     end: Alignment.bottomCenter,
-//                   ),
-//                 ),
-//                 child: ClipRRect(
-//                   borderRadius: const BorderRadius.only(
-//                     topLeft: Radius.circular(16),
-//                     topRight: Radius.circular(16),
-//                   ),
-//                   child: plant.imageUrl != null && plant.imageUrl!.isNotEmpty
-//                       ? Image.network(
-//                           plant.imageUrl!,
-//                           fit: BoxFit.cover,
-//                           errorBuilder: (context, error, stackTrace) {
-//                             return const Icon(
-//                               Icons.local_florist,
-//                               size: 40,
-//                               color: Colors.green,
-//                             );
-//                           },
-//                         )
-//                       : const Icon(
-//                           Icons.local_florist,
-//                           size: 40,
-//                           color: Colors.green,
-//                         ),
-//                 ),
-//               ),
-//             ),
-
-//             // Plant info
-//             Expanded(
-//               flex: 2,
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     // Plant name
-//                     Text(
-//                       plant.name,
-//                       style: const TextStyle(
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.w600,
-//                         color: Color(0xFF025A1E),
-//                       ),
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                     const SizedBox(height: 4),
-
-//                     // Scientific name
-//                      if (plant.scientificName != null)
-//                         Text(plant.scientificName!,                    
-//                         style: const TextStyle(
-//                         fontSize: 13,
-//                         fontStyle: FontStyle.italic,
-//                         color: Color(0xFF4B7742),
-//                       ),
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-
-//                     const Spacer(),
-
-//                     // Add button
-//                     Align(
-//                       alignment: Alignment.centerRight,
-//                       child: Container(
-//                         width: 24,
-//                         height: 24,
-//                         decoration: BoxDecoration(
-//                           color: Colors.green,
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                         child: const Icon(
-//                           Icons.add,
-//                           color: Colors.white,
-//                           size: 16,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class PlantCard extends StatelessWidget {
   final Plant plant;
   
@@ -544,7 +294,7 @@ class PlantCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ...(_wrapTextIfNeeded(plant.name).map((line) => 
+                              ...(_wrapTextIfNeeded(plant.commonName).map((line) => 
                                 Text(
                                   line,
                                   style: const TextStyle(
