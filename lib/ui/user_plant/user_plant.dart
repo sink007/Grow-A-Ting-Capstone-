@@ -4,6 +4,7 @@ import '../../model/user_plant.dart';
 import '../../widgets/plant_timeline_widget.dart';
 import '../../widgets/plant_tasks_widget.dart';
 import '../../widgets/plant_diary_widget.dart';
+import '../care_guide/care_guide.dart';
 
 class UserPlantPage extends StatefulWidget {
   final UserPlant userPlant;
@@ -167,23 +168,34 @@ class _UserPlantPageState extends State<UserPlantPage>
                     ),
                     const SizedBox(height: 16),
                     Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF399942),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Text(
-                        'See Care Guide',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CareGuidePage(plant: widget.plant),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF399942),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Text(
+                            'See Care Guide',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+
                   ],
                 ),
               ),
