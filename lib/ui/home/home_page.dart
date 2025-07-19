@@ -135,9 +135,21 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         elevation: 0,
-        leading: IconButton(
+        leading: PopupMenuButton<String>(
           icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () {},
+          onSelected: (value) {
+            if (value == 'diary') {
+              Navigator.pushNamed(context, '/plant_diary');
+            }
+            // Add more routes here if needed
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'diary',
+              child: Text('Plant Diary'),
+            ),
+            // Add more menu items here if needed
+          ],
         ),
       ),
       body: SingleChildScrollView(

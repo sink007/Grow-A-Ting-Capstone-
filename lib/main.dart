@@ -1,4 +1,3 @@
-
 // import 'package:flutter/material.dart';
 // import 'package:grow_a_ting/ui/plants/find_plants.dart';
 // import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,7 +7,6 @@
 // import 'services/auth_service.dart';
 // import 'package:forui/forui.dart';
 // import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 
 // void main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
@@ -51,8 +49,6 @@
 //   }
 // }
 
-
-
 import 'package:flutter/material.dart';
 import 'package:grow_a_ting/ui/plants/find_plants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -62,11 +58,12 @@ import 'ui/home/home_page.dart';
 import 'services/auth_service.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'ui/plant_diary/plant_diary.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  
+
   // Initialize Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
@@ -97,7 +94,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final AuthService authService = AuthService();
-    
+
     return MaterialApp(
       title: 'Yaad Garden',
       locale: const Locale('en', 'US'),
@@ -108,13 +105,15 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF399942)),
         useMaterial3: true,
       ),
-      builder: (context, child) => FTheme(data: FThemes.zinc.light, child: child!),
+      builder: (context, child) =>
+          FTheme(data: FThemes.zinc.light, child: child!),
       home: authService.isLoggedIn ? _buildMainApp() : const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
         '/home': (context) => _buildMainApp(),
         '/plants/find': (context) => const FindPlantsPage(),
+        '/plant_diary': (context) => const PlantDiaryPage(),
       },
     );
   }
@@ -136,7 +135,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                   'Home',
                   style: TextStyle(
                     color: index == 0 ? Colors.green : Colors.grey,
-                    fontWeight: index == 0 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        index == 0 ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -149,7 +149,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                   'Explore',
                   style: TextStyle(
                     color: index == 1 ? Colors.green : Colors.grey,
-                    fontWeight: index == 1 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        index == 1 ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -162,7 +163,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                   'Reminders',
                   style: TextStyle(
                     color: index == 2 ? Colors.green : Colors.grey,
-                    fontWeight: index == 2 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        index == 2 ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -175,7 +177,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                   'Check Up',
                   style: TextStyle(
                     color: index == 3 ? Colors.green : Colors.grey,
-                    fontWeight: index == 3 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        index == 3 ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
