@@ -140,15 +140,19 @@ class _HomePageState extends State<HomePage> {
           onSelected: (value) {
             if (value == 'diary') {
               Navigator.pushNamed(context, '/plant_diary');
+            } else if (value == 'diagnosis') {
+              Navigator.pushNamed(context, '/leaf_diagnosis');
             }
-            // Add more routes here if needed
           },
           itemBuilder: (context) => [
             const PopupMenuItem(
               value: 'diary',
               child: Text('Plant Diary'),
             ),
-            // Add more menu items here if needed
+            const PopupMenuItem(
+              value: 'diagnosis',
+              child: Text('Leaf Diagnosis'),
+            ),
           ],
         ),
       ),

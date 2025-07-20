@@ -1,70 +1,21 @@
-// import 'package:flutter/material.dart';
-// import 'package:grow_a_ting/ui/plants/find_plants.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'ui/auth/login_page.dart';
-// import 'ui/auth/signup_page.dart';
-// import 'ui/home/home_page.dart';
-// import 'services/auth_service.dart';
-// import 'package:forui/forui.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//      await dotenv.load(fileName: '.env');
-//   // Initialize Supabase
-//    await Supabase.initialize(
-//     url: dotenv.env['SUPABASE_URL']!,
-//     anonKey: dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
-//   );
-
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Yaad Garden',
-//       theme: ThemeData(
-//         scaffoldBackgroundColor: const Color(0xFFFAFAFA),
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-//         useMaterial3: true,
-//       ),
-//       // Check if user is already logged in
-//       home: _getInitialRoute(),
-//       routes: {
-//         '/login': (context) => const LoginPage(),
-//         '/signup': (context) => const SignupPage(),
-//         '/home': (context) => const HomePage(),
-//         '/plants/find': (context) => const FindPlantsPage(),
-//       },
-//     );
-//   }
-
-//   Widget _getInitialRoute() {
-//     final AuthService authService = AuthService();
-//     return authService.isLoggedIn ? const HomePage() : const LoginPage();
-//   }
-// }
-
 import 'package:flutter/material.dart';
-import 'package:grow_a_ting/ui/plants/find_plants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:forui/forui.dart';
+
+// Screens
 import 'ui/auth/login_page.dart';
 import 'ui/auth/signup_page.dart';
 import 'ui/home/home_page.dart';
-import 'services/auth_service.dart';
-import 'package:forui/forui.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'ui/plants/find_plants.dart';
 import 'ui/plant_diary/plant_diary.dart';
+import 'ui/diagnosis/leaf_diagnosis.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
-  // Initialize Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
@@ -73,7 +24,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-// List of pages for each tab
 List<Widget> _pages = [
   const HomePage(),
   const FindPlantsPage(),
@@ -88,12 +38,12 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
+class _MyAppState extends State<MyApp> {
   int index = 0;
 
   @override
   Widget build(BuildContext context) {
-    final AuthService authService = AuthService();
+    final authService = AuthService();
 
     return MaterialApp(
       title: 'Yaad Garden',
@@ -102,7 +52,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       supportedLocales: FLocalizations.supportedLocales,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFFAFAFA),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF399942)),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
       builder: (context, child) =>
@@ -114,6 +64,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
         '/home': (context) => _buildMainApp(),
         '/plants/find': (context) => const FindPlantsPage(),
         '/plant_diary': (context) => const PlantDiaryPage(),
+        '/leaf_diagnosis': (context) => const LeafDiagnosisPage(),
       },
     );
   }
@@ -126,62 +77,10 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
             index: index,
             onChange: (newIndex) => setState(() => index = newIndex),
             children: [
-              FBottomNavigationBarItem(
-                icon: Icon(
-                  Icons.home,
-                  color: index == 0 ? Colors.green : Colors.grey,
-                ),
-                label: Text(
-                  'Home',
-                  style: TextStyle(
-                    color: index == 0 ? Colors.green : Colors.grey,
-                    fontWeight:
-                        index == 0 ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ),
-              FBottomNavigationBarItem(
-                icon: Icon(
-                  Icons.search,
-                  color: index == 1 ? Colors.green : Colors.grey,
-                ),
-                label: Text(
-                  'Explore',
-                  style: TextStyle(
-                    color: index == 1 ? Colors.green : Colors.grey,
-                    fontWeight:
-                        index == 1 ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ),
-              FBottomNavigationBarItem(
-                icon: Icon(
-                  Icons.notifications,
-                  color: index == 2 ? Colors.green : Colors.grey,
-                ),
-                label: Text(
-                  'Reminders',
-                  style: TextStyle(
-                    color: index == 2 ? Colors.green : Colors.grey,
-                    fontWeight:
-                        index == 2 ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ),
-              FBottomNavigationBarItem(
-                icon: Icon(
-                  Icons.health_and_safety,
-                  color: index == 3 ? Colors.green : Colors.grey,
-                ),
-                label: Text(
-                  'Check Up',
-                  style: TextStyle(
-                    color: index == 3 ? Colors.green : Colors.grey,
-                    fontWeight:
-                        index == 3 ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ),
+              _navItem(Icons.home, 'Home', 0),
+              _navItem(Icons.search, 'Explore', 1),
+              _navItem(Icons.notifications, 'Reminders', 2),
+              _navItem(Icons.health_and_safety, 'Check Up', 3),
             ],
           ),
           content: _pages[index],
@@ -189,31 +88,41 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       },
     );
   }
+
+  FBottomNavigationBarItem _navItem(IconData icon, String label, int tabIndex) {
+    return FBottomNavigationBarItem(
+      icon: Icon(
+        icon,
+        color: index == tabIndex ? Colors.green : Colors.grey,
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: index == tabIndex ? Colors.green : Colors.grey,
+          fontWeight: index == tabIndex ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+    );
+  }
 }
 
 // Placeholder pages
 class RemindersPage extends StatelessWidget {
   const RemindersPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Text('Reminders Page'),
-      ),
+      body: Center(child: Text('Reminders Page')),
     );
   }
 }
 
 class CheckUpPage extends StatelessWidget {
   const CheckUpPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Text('Check Up Page'),
-      ),
+      body: Center(child: Text('Check Up Page')),
     );
   }
 }
