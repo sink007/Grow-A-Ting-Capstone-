@@ -66,11 +66,11 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
   }
 
   Future<void> _loadModel() async {
-    _interpreter = await Interpreter.fromAsset('assets/plant_modelV2.tflite');
+    _interpreter = await Interpreter.fromAsset('assets/diagnosis/plant_modelV2.tflite');
   }
 
   Future<void> _loadClassNames() async {
-    final jsonString = await rootBundle.loadString('assets/classV2_names.json');
+    final jsonString = await rootBundle.loadString('assets/diagnosis/classV2_names.json');
     final List<dynamic> jsonList = json.decode(jsonString);
     _classNames = jsonList.cast<String>();
   }
@@ -97,9 +97,8 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     }
   }
 
-
-  Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
+  Future<void> _pickImageFromSource(ImageSource source) async {
+    final picked = await _picker.pickImage(source: source);
     if (picked != null) {
       final file = File(picked.path);
       setState(() {
@@ -136,7 +135,10 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
 
     final rawOutput = output[0] as List<double>;
     final allowedLabels = plantDiseaseMap[_selectedCrop]!;
-    final allowedIndices = [for (int i = 0; i < _classNames.length; i++) if (allowedLabels.contains(_classNames[i])) i];
+    final allowedIndices = [
+      for (int i = 0; i < _classNames.length; i++)
+        if (allowedLabels.contains(_classNames[i])) i
+    ];
 
     final filtered = List<double>.filled(_classNames.length, 0);
     double total = 0;
@@ -178,26 +180,22 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       final path = '$userId/$fileName';
       final imageBytes = await imageFile.readAsBytes();
 
-      // Upload to Storage
       final uploadRes = await _supabase.storage
           .from('private-uploads')
           .uploadBinary(path, imageBytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
 
       print('✅ Upload key: $uploadRes');
 
-      // Create signed URL
       String signedUrl = '';
       try {
         signedUrl = await _supabase.storage
-          .from('private-uploads')
-          .createSignedUrl(path, 3600);
+            .from('private-uploads')
+            .createSignedUrl(path, 3600);
         print("✅ Signed URL created: $signedUrl");
       } catch (e) {
         print("⚠️ Failed to create signed URL: $e");
       }
 
-
-      // Insert into image table
       final imageInsert = await _supabase.from('image').insert({
         'img_name': fileName,
         'file_path': path,
@@ -207,18 +205,16 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       final imageId = imageInsert['image_id'];
       print("✅ Image DB row inserted: $imageId");
 
-      // Insert into diagnosis table
       final diagnosisInsert = await _supabase.from('diagnosis').insert({
         'user_id': userId,
         'image_id': imageId,
-        'result': [prediction],           // 👈 wrapped in list
+        'result': [prediction],
         'timestamp': now.toIso8601String(),
-        'plant_type': [_selectedCrop],    // 👈 wrapped in list
+        'plant_type': [_selectedCrop],
       }).select().single();
       final diagnosisId = diagnosisInsert['diagnosis_id'];
       print("✅ Diagnosis DB row inserted: $diagnosisId");
 
-      // Insert into response table
       await _supabase.from('response').insert({
         'diagnosis_id': diagnosisId,
         'result': prediction,
@@ -235,59 +231,69 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     }
   }
 
- @override
- Widget build(BuildContext context) {
-   return Scaffold(
-     appBar: AppBar(title: const Text('Leaf Diagnosis')),
-     body: Padding(
-       padding: const EdgeInsets.all(16.0),
-       child: ListView(
-         children: [
-           DropdownButton<String>(
-             value: _selectedCrop,
-             onChanged: (value) {
-               setState(() {
-                 _selectedCrop = value!;
-                 _result = null;
-                 _image = null;
-               });
-             },
-             items: plantDiseaseMap.keys.map((crop) {
-               return DropdownMenuItem<String>(
-                 value: crop,
-                 child: Text(crop),
-               );
-             }).toList(),
-           ),
-           const SizedBox(height: 16),
-           ElevatedButton(
-             onPressed: _pickImage,
-             child: const Text('Pick Leaf Image'),
-           ),
-           const SizedBox(height: 16),
-           if (_image != null) Image.file(_image!, height: 200),
-           const SizedBox(height: 20),
-           if (_result != null)
-             Text(_result!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-           const Divider(height: 40),
-           const Text('Previous Diagnoses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-           ..._diagnosisHistory.map((entry) => ListTile(
-             title: Text(entry['result']),
-             subtitle: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 Text("Crop: ${entry['diagnosis']['plant_type']}"),
-                 Text("Confidence: ${(entry['diagnosis_confidence'] * 100).toStringAsFixed(2)}%"),
-                 Text("Description: ${entry['description']}"),
-                 Text("Solution: ${entry['solution']}"),
-               ],
-             ),
-             trailing: Text(entry['diagnosis']['timestamp'].toString().split('T').first),
-           )),
-         ],
-       ),
-     ),
-   );
- }
-
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Leaf Diagnosis')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            DropdownButton<String>(
+              value: _selectedCrop,
+              onChanged: (value) {
+                setState(() {
+                  _selectedCrop = value!;
+                  _result = null;
+                  _image = null;
+                });
+              },
+              items: plantDiseaseMap.keys.map((crop) {
+                return DropdownMenuItem<String>(
+                  value: crop,
+                  child: Text(crop),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _pickImageFromSource(ImageSource.gallery),
+                  icon: const Icon(Icons.image),
+                  label: const Text('Gallery'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _pickImageFromSource(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Camera'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_image != null) Image.file(_image!, height: 200),
+            const SizedBox(height: 20),
+            if (_result != null)
+              Text(_result!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
+            const Divider(height: 40),
+            const Text('Previous Diagnoses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ..._diagnosisHistory.map((entry) => ListTile(
+              title: Text(entry['result']),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Crop: ${entry['diagnosis']['plant_type']}"),
+                  Text("Confidence: ${(entry['diagnosis_confidence'] * 100).toStringAsFixed(2)}%"),
+                  Text("Description: ${entry['description']}"),
+                  Text("Solution: ${entry['solution']}"),
+                ],
+              ),
+              trailing: Text(entry['diagnosis']['timestamp'].toString().split('T').first),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
 }
