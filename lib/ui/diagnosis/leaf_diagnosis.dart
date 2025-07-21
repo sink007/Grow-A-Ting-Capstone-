@@ -23,11 +23,19 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
   late List<String> _classNames;
   List<Map<String, dynamic>> _diagnosisHistory = [];
 
-  String? _selectedCrop = 'Tomato';
+  String? _selectedCrop;
 
   final Map<String, List<String>> plantDiseaseMap = {
-    "Cherry": ["Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy"],
-    "Orange": ["orange_Black_spot", "orange_canker", "orange_greening", "orange_healthy"],
+    "Cherry": [
+      "Cherry_(including_sour)___Powdery_mildew",
+      "Cherry_(including_sour)___healthy"
+    ],
+    "Orange": [
+      "orange_Black_spot",
+      "orange_canker",
+      "orange_greening",
+      "orange_healthy"
+    ],
     "Corn": [
       "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
       "Corn_(maize)___Common_rust_",
@@ -35,7 +43,11 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       "Corn_(maize)___healthy"
     ],
     "Pepper": ["Pepper,_bell___Bacterial_spot", "Pepper,_bell___healthy"],
-    "Potato": ["Potato___Early_blight", "Potato___Late_blight", "Potato___healthy"],
+    "Potato": [
+      "Potato___Early_blight",
+      "Potato___Late_blight",
+      "Potato___healthy"
+    ],
     "Tomato": [
       "Tomato___Bacterial_spot",
       "Tomato___Early_blight",
@@ -66,11 +78,13 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
   }
 
   Future<void> _loadModel() async {
-    _interpreter = await Interpreter.fromAsset('assets/diagnosis/plant_modelV2.tflite');
+    _interpreter =
+    await Interpreter.fromAsset('assets/diagnosis/plant_modelV2.tflite');
   }
 
   Future<void> _loadClassNames() async {
-    final jsonString = await rootBundle.loadString('assets/diagnosis/classV2_names.json');
+    final jsonString = await rootBundle.loadString(
+        'assets/diagnosis/classV2_names.json');
     final List<dynamic> jsonList = json.decode(jsonString);
     _classNames = jsonList.cast<String>();
   }
@@ -85,7 +99,9 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
           .select('*, diagnosis (plant_type, timestamp, user_id)')
           .order('diagnosis_date', ascending: false);
 
-      final filtered = res.where((r) => r['diagnosis']['user_id'] == userId).toList();
+      final filtered = res
+          .where((r) => r['diagnosis']['user_id'] == userId)
+          .toList();
 
       setState(() {
         _diagnosisHistory = List<Map<String, dynamic>>.from(filtered);
@@ -125,12 +141,15 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     if (oriImage == null) return;
 
     final resized = img.copyResize(oriImage, width: 256, height: 256);
-    final input = List.generate(1, (_) => List.generate(256, (y) => List.generate(256, (x) {
-      final pixel = resized.getPixel(x, y);
-      return [pixel.r / 255.0, pixel.g / 255.0, pixel.b / 255.0];
-    })));
+    final input = List.generate(1, (_) =>
+        List.generate(256, (y) =>
+            List.generate(256, (x) {
+              final pixel = resized.getPixel(x, y);
+              return [pixel.r / 255.0, pixel.g / 255.0, pixel.b / 255.0];
+            })));
 
-    var output = List.filled(_classNames.length, 0.0).reshape([1, _classNames.length]);
+    var output = List.filled(_classNames.length, 0.0).reshape(
+        [1, _classNames.length]);
     _interpreter.run(input, output);
 
     final rawOutput = output[0] as List<double>;
@@ -150,18 +169,24 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       filtered[i] = total > 0 ? filtered[i] / total : 0.0;
     }
 
-    final maxIndex = filtered.indexWhere((v) => v == filtered.reduce((a, b) => a > b ? a : b));
+    final maxIndex = filtered.indexWhere((v) =>
+    v == filtered.reduce((a, b) => a > b ? a : b));
     final prediction = _classNames[maxIndex];
     final confidence = filtered[maxIndex];
 
     String description = '';
     String solution = '';
     if (prediction.toLowerCase().contains('early_blight')) {
-      description = 'Early blight is a common disease in potato caused by a fungus.';
-      solution = 'Remove infected leaves. Apply a fungicide if necessary. Practice crop rotation.';
-    } else if (prediction.toLowerCase().contains('gray_leaf') || prediction.toLowerCase().contains('cercospora')) {
-      description = 'Gray leaf spot is a fungal disease affecting corn, causing rectangular lesions.';
-      solution = 'Avoid overhead watering. Use resistant varieties. Apply fungicides early if needed.';
+      description =
+      'Early blight is a common disease in potato caused by a fungus.';
+      solution =
+      'Remove infected leaves. Apply a fungicide if necessary. Practice crop rotation.';
+    } else if (prediction.toLowerCase().contains('gray_leaf') ||
+        prediction.toLowerCase().contains('cercospora')) {
+      description =
+      'Gray leaf spot is a fungal disease affecting corn, causing rectangular lesions.';
+      solution =
+      'Avoid overhead watering. Use resistant varieties. Apply fungicides early if needed.';
     } else if (prediction.toLowerCase().contains('healthy')) {
       description = 'The plant appears healthy.';
       solution = 'Continue proper care and regular monitoring.';
@@ -171,7 +196,8 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     }
 
     setState(() {
-      _result = "$prediction\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
+      _result =
+      "$prediction\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
     });
 
     try {
@@ -182,7 +208,8 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
 
       final uploadRes = await _supabase.storage
           .from('private-uploads')
-          .uploadBinary(path, imageBytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+          .uploadBinary(path, imageBytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'));
 
       print('✅ Upload key: $uploadRes');
 
@@ -234,13 +261,18 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Leaf Diagnosis')),
+      appBar: AppBar(
+        title: const Text('Leaf Diagnosis'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            DropdownButton<String>(
+            const SizedBox(height: 16), // Shift dropdown down
+            DropdownButtonFormField<String>(
               value: _selectedCrop,
+              hint: const Text('Select Crop Type'), // 👈 This shows default text
               onChanged: (value) {
                 setState(() {
                   _selectedCrop = value!;
@@ -254,8 +286,13 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                   child: Text(crop),
                 );
               }).toList(),
+              decoration: const InputDecoration(
+                labelText: 'Select Crop Type',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -263,34 +300,83 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                   onPressed: () => _pickImageFromSource(ImageSource.gallery),
                   icon: const Icon(Icons.image),
                   label: const Text('Gallery'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade100),
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _pickImageFromSource(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt),
                   label: const Text('Camera'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade100),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            if (_image != null) Image.file(_image!, height: 200),
             const SizedBox(height: 20),
-            if (_result != null)
-              Text(_result!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-            const Divider(height: 40),
-            const Text('Previous Diagnoses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ..._diagnosisHistory.map((entry) => ListTile(
-              title: Text(entry['result']),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Crop: ${entry['diagnosis']['plant_type']}"),
-                  Text("Confidence: ${(entry['diagnosis_confidence'] * 100).toStringAsFixed(2)}%"),
-                  Text("Description: ${entry['description']}"),
-                  Text("Solution: ${entry['solution']}"),
-                ],
+            if (_image != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(_image!, height: 200),
               ),
-              trailing: Text(entry['diagnosis']['timestamp'].toString().split('T').first),
-            )),
+            const SizedBox(height: 16),
+            if (_result != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  border: Border.all(color: Colors.green),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _result!,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            const SizedBox(height: 30),
+            const Text(
+              'Previous Diagnoses',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            if (_diagnosisHistory.isEmpty)
+              const Center(child: Text("No previous diagnoses found.")),
+            ..._diagnosisHistory.map((entry) =>
+                Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(entry['result'],
+                            style: const TextStyle(fontWeight: FontWeight
+                                .bold)),
+                        const SizedBox(height: 4),
+                        Text("Crop: ${entry['diagnosis']['plant_type']}"),
+                        Text("Confidence: ${(entry['diagnosis_confidence'] *
+                            100).toStringAsFixed(2)}%"),
+                        Text("Description: ${entry['description']}"),
+                        Text("Solution: ${entry['solution']}"),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            entry['diagnosis']['timestamp']
+                                .toString()
+                                .split('T')
+                                .first,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
           ],
         ),
       ),
