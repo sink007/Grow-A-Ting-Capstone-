@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
       supportedLocales: FLocalizations.supportedLocales,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFFAFAFA),
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF399942)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF399942)),
         useMaterial3: true,
       ),
       builder: (context, child) =>
@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> {
               _navItem(Icons.home, 'Home', 0),
               _navItem(Icons.search, 'Explore', 1),
               _navItem(Icons.notifications, 'Reminders', 2),
-              _navItem(Icons.health_and_safety, 'Check Up', 3),
+              _navItem(Icons.health_and_safety, 'Diagnose Plant', 3),
             ],
           ),
           content: _pages[index],

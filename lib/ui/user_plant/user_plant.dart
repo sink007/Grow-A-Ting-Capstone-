@@ -11,10 +11,10 @@ class UserPlantPage extends StatefulWidget {
   final Plant plant;
 
   const UserPlantPage({
-    Key? key,
+    super.key,
     required this.userPlant,
     required this.plant,
-  }) : super(key: key);
+  });
 
   @override
   State<UserPlantPage> createState() => _UserPlantPageState();
@@ -94,7 +94,7 @@ class _UserPlantPageState extends State<UserPlantPage>
           // Plant Header Section
           Container(
             margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -145,7 +145,7 @@ class _UserPlantPageState extends State<UserPlantPage>
                     Text(
                       plant.commonName,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -154,7 +154,7 @@ class _UserPlantPageState extends State<UserPlantPage>
                       plant.scientificName ?? 'Unknown species',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Colors.grey,
+                        color: Color(0xFF399942),
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -162,7 +162,7 @@ class _UserPlantPageState extends State<UserPlantPage>
                     Text(
                       'Needs ${plant.sunlight?.toLowerCase() ?? 'unknown'}, ${plant.water?.toLowerCase() ?? 'unknown watering'}',
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         color: Colors.black87,
                       ),
                     ),
@@ -179,7 +179,7 @@ class _UserPlantPageState extends State<UserPlantPage>
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: const Color(0xFF399942),
                             borderRadius: BorderRadius.circular(16),

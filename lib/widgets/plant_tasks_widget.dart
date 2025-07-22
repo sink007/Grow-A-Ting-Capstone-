@@ -63,7 +63,7 @@ class TaskService {
 class PlantTasksWidget extends StatefulWidget {
   final UserPlant userPlant;
 
-  const PlantTasksWidget({Key? key, required this.userPlant}) : super(key: key);
+  const PlantTasksWidget({super.key, required this.userPlant});
 
   @override
   State<PlantTasksWidget> createState() => _PlantTasksWidgetState();
@@ -81,7 +81,7 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
 
   Future<void> loadTasks() async {
     // Just use dummy data for Seed Propagation task
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     final seedPropagationTask = PlantTask(
       id: 1,
@@ -127,11 +127,11 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
             const SizedBox(height: 16),
             const Text(
               'No upcoming tasks',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 8),
             const Text(
-              "We\'ll remind you when it's time to care for your plant.",
+              "We'll remind you when it's time to care for your plant.",
               style: TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
@@ -148,7 +148,7 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
                   task: task,
                   onStepToggle: _toggleStep,
                 ))
-            .toList(),
+            ,
       ],
     );
   }
@@ -192,10 +192,10 @@ class TaskSection extends StatefulWidget {
   final Function(PlantTask, TaskStep) onStepToggle;
 
   const TaskSection({
-    Key? key,
+    super.key,
     required this.task,
     required this.onStepToggle,
-  }) : super(key: key);
+  });
 
   @override
   State<TaskSection> createState() => _TaskSectionState();
@@ -290,10 +290,10 @@ class StepItem extends StatelessWidget {
   final VoidCallback onToggle;
 
   const StepItem({
-    Key? key,
+    super.key,
     required this.step,
     required this.onToggle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

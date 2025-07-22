@@ -4,8 +4,7 @@ import '../model/user_plant.dart';
 class PlantTimelineWidget extends StatelessWidget {
   final UserPlant userPlant;
 
-  const PlantTimelineWidget({Key? key, required this.userPlant})
-      : super(key: key);
+  const PlantTimelineWidget({super.key, required this.userPlant});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +16,7 @@ class PlantTimelineWidget extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'No timeline events yet',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(color: Colors.black54 , fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           const Text(

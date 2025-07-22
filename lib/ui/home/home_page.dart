@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -29,69 +30,110 @@ class _HomePageState extends State<HomePage> {
   List<UserPlant> userPlants = [];
   bool isLoadingPlants = false;
 
+  @override
+  void initState() {
+    super.initState();
+    print('🚀 HomePage initState called');
+    final user = Supabase.instance.client.auth.currentUser;
+    userEmail = user?.email;
+    print('👤 User email: $userEmail');
+    print('🆔 User ID: ${user?.id}');
+    fetchWeather();
+    _fetchUserPlants();
+  }
+
   Future<void> _fetchUserPlants() async {
-    setState(() {
-      isLoadingPlants = true;
-    });
+    print('🌱 Starting _fetchUserPlants');
+    if (!mounted) {
+      print('❌ Widget not mounted, returning');
+      return;
+    }
+    
+    if (mounted) {
+      setState(() {
+        isLoadingPlants = true;
+      });
+    }
 
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
+        print('❌ User not authenticated');
         throw Exception('User not authenticated');
       }
 
+      print('🔍 Fetching plants for user: ${user.id}');
+      final url = 'http://10.0.2.2:3000/user/${user.id}/plants';
+      print('🌐 API URL: $url');
+      
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/user/${user.id}/plants'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
 
+      print('📡 API Response Status: ${response.statusCode}');
+      // print('📦 API Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-
-        setState(() {
-          userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
-        });
+        print('📊 Parsed data length: ${data.length}');
+        print('📋 First item (if exists): ${data.isNotEmpty ? data.first : 'No data'}');
+        
+        if (mounted) {
+          setState(() {
+            userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
+            print('✅ User plants updated: ${userPlants.length} plants');
+            for (int i = 0; i < userPlants.length; i++) {
+              print('🌿 Plant $i: ${userPlants[i].plant.commonName}');
+            }
+          });
+        }
       } else {
-        print('Failed to load plants: ${response.statusCode}');
+        print('❌ Failed to load plants: ${response.statusCode}');
+        print('❌ Error body: ${response.body}');
       }
-    } catch (e) {
-      print('Error fetching plants: $e');
+    } catch (e, stackTrace) {
+      print('💥 Error fetching plants: $e');
+      print('📍 Stack trace: $stackTrace');
     } finally {
-      setState(() {
-        isLoadingPlants = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingPlants = false;
+        });
+      }
+      print('🏁 _fetchUserPlants completed');
     }
-  @override
-  void initState() {
-    super.initState();
-    final user = Supabase.instance.client.auth.currentUser;
-    userEmail = user?.email;
-    print('User email: $userEmail');
-    fetchWeather();
-    _fetchUserPlants();
-  }
-    _fetchUserPlants();
   }
 
   Future<void> fetchWeather() async {
+    print('🌤️ Starting fetchWeather');
     try {
       LocationData locationData = await _getCurrentLocation();
+      print('📍 Location obtained: ${locationData.latitude}, ${locationData.longitude}');
+      
       final data = await WeatherService.fetchWeatherFromCoordinates(
         locationData.latitude!,
         locationData.longitude!,
       );
 
-      setState(() {
-        weatherData = data;
-        isLoadingWeather = false;
-        weatherErrorMessage = null;
-      });
-    } catch (e) {
-      print('Error fetching weather: $e');
-      setState(() {
-        isLoadingWeather = false;
-        weatherErrorMessage = e.toString();
-      });
+      print('🌤️ Weather data received');
+      if (mounted) {
+        setState(() {
+          weatherData = data;
+          isLoadingWeather = false;
+          weatherErrorMessage = null;
+        });
+        print('✅ Weather state updated');
+      }
+    } catch (e, stackTrace) {
+      print('💥 Error fetching weather: $e');
+      print('📍 Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          isLoadingWeather = false;
+          weatherErrorMessage = e.toString();
+        });
+      }
     }
   }
 
@@ -119,6 +161,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔄 Building HomePage widget');
+    print('🌤️ Weather loading: $isLoadingWeather');
+    print('🌱 Plants loading: $isLoadingPlants');
+    print('📊 Plants count: ${userPlants.length}');
+    
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -279,10 +326,12 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  isLoadingWeather = true;
-                  weatherErrorMessage = null;
-                });
+                if (mounted) {
+                  setState(() {
+                    isLoadingWeather = true;
+                    weatherErrorMessage = null;
+                  });
+                }
                 fetchWeather();
               },
               child: const Text('Try Again'),
@@ -373,6 +422,7 @@ class _HomePageState extends State<HomePage> {
 
   // Separated plants content without the header
   Widget _buildPlantsContent() {
+    print('🎨 Building plants content. Plants count: ${userPlants.length}');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -553,6 +603,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 8),

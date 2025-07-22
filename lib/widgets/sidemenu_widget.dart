@@ -24,14 +24,14 @@ class SideMenu extends StatelessWidget {
               ),
               child: Row(
               children: [
-                // Circular frame for image
+                
                 Container(
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                  color: Color(0xFF399942),
+                  color: const Color(0xFF399942),
                   width: 2,
                   ),
                 ),
@@ -47,7 +47,7 @@ class SideMenu extends StatelessWidget {
                 const SizedBox(width: 16),
 
                 
-                // Name and email
+                // User Info
                 Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,9 +62,9 @@ class SideMenu extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    userEmail ?? 'user@example.com',
+                    userEmail ?? 'user@email.com',
                     style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 10,
                     color: Colors.grey,
                     ),
                   ),
@@ -78,7 +78,7 @@ class SideMenu extends StatelessWidget {
             
              // Divider
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                       child: Divider(
                         color: Color(0xFFE0E0E0),
                         thickness: 1,
@@ -96,16 +96,16 @@ class SideMenu extends StatelessWidget {
                     // My Plants
                     _buildMenuItem(
                       context,
-                      icon: Icons.home,
+                      icon: Icons.spa,
                       title: 'My Plants',
                       route: '/home',
-                      isSelected: true, // You can manage selection state
+                      isSelected: true, 
                     ),
                     
                     // Diagnose Plant
                     _buildMenuItem(
                       context,
-                      icon: Icons.search,
+                      icon: Icons.health_and_safety,
                       title: 'Diagnose Plant',
                       route: '/leaf_diagnosis',
                     ),
@@ -217,7 +217,7 @@ class SideMenu extends StatelessWidget {
     Navigator.pop(context); // Close drawer
     
     if (isLogout) {
-      // Handle logout logic here
+      
       _showLogoutDialog(context);
     } else {
       Navigator.pushNamed(context, route);
@@ -242,7 +242,7 @@ class SideMenu extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Perform actual logout
+                
                 Navigator.pushNamedAndRemoveUntil(
                   context, 
                   '/login', 

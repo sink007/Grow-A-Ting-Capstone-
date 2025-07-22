@@ -5,7 +5,7 @@ import '../../model/plant.dart';
 class CareGuidePage extends StatefulWidget {
   final Plant plant;
 
-  const CareGuidePage({Key? key, required this.plant}) : super(key: key);
+  const CareGuidePage({super.key, required this.plant});
 
   @override
   State<CareGuidePage> createState() => _CareGuidePageState();
@@ -16,7 +16,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
   bool _isExpanded = false;
   
   // Track which sections are expanded
-  Map<String, bool> _sectionStates = {
+  final Map<String, bool> _sectionStates = {
     'description': true,
     'tools': false,
     'growth': false,
@@ -57,14 +57,14 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
         return Icons.content_cut;
       case 'fertilizer':
       case 'plant food':
-        return Icons.eco;
+        return Icons.compost;
       case 'pot':
       case 'planter':
       case 'container':
-        return Icons.local_florist;
+        return Icons.inbox_rounded;
       case 'soil':
       case 'compost':
-        return Icons.grass;
+        return Icons.terrain_rounded;
       case 'spray bottle':
       case 'mister':
         return Icons.spa;
@@ -85,7 +85,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
           // Main scrollable content
@@ -99,7 +99,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                   child: Stack(
                     children: [
                       // Plant image
-                      Container(
+                      SizedBox(
                         width: double.infinity,
                         height: 300,
                         child: widget.plant.imageUrl != null
@@ -179,7 +179,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                             _buildExpandableSection(
                               'description',
                               'Description',
-                              Icons.info_outline,
+                              Icons.info_outline_rounded,
                               _buildDescriptionContent(),
                             ),
                           
@@ -187,7 +187,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                             _buildExpandableSection(
                               'tools',
                               'Tools Needed',
-                              Icons.build_outlined,
+                              Icons.grass_sharp,
                               _buildToolsContent(),
                             ),
                           
@@ -195,7 +195,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                             _buildExpandableSection(
                               'growth',
                               'Growth Stages',
-                              Icons.timeline,
+                              Icons.spa,
                               _buildGrowthStagesContent(),
                             ),
                           
@@ -261,7 +261,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               widget.plant.scientificName!,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: Color(0xFF399942),
                 fontStyle: FontStyle.italic,
@@ -280,7 +280,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
             Icons.wb_sunny,
             'Sunlight',
             widget.plant.sunlight ?? 'Full sun',
-            Colors.orange.shade200,
+            Color(0xFFF7F169),
           ),
         ),
         const SizedBox(width: 16),
@@ -301,7 +301,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color, width: 1),
         
       ),
@@ -339,7 +339,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFF399942), width: 1),
+        border: Border.all(color: const Color(0xFF399942), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -366,7 +366,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: _lightGreen,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Icon(
                       icon,
@@ -379,8 +379,8 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                         color: _primaryGreen,
                       ),
                     ),
@@ -418,6 +418,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
       style: const TextStyle(
         fontSize: 14,
         color: Colors.black87,
+        fontWeight: FontWeight.w500,
         height: 1.5,
       ),
     );
@@ -452,7 +453,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                       tool.name,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color:_primaryGreen,
                       ),
                     ),
@@ -462,7 +463,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                         tool.description!,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: Colors.black87,
                           height: 1.3,
                         ),
                       ),
@@ -494,8 +495,8 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                 Text(
                   stage.week,
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     color: _primaryGreen,
                   ),
                 ),
@@ -528,7 +529,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
                 entry.key,
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: _primaryGreen,
                 ),
               ),
@@ -567,7 +568,7 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
           title,
           style: TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: _primaryGreen,
           ),
         ),

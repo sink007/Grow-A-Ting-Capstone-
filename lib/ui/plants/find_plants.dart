@@ -44,9 +44,11 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
         throw Exception('Failed to load plants: ${response.statusCode}');
       }
     } catch (e) {
+      if (mounted){
       setState(() {
         isLoading = false;
       });
+    }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading plants: $e')),

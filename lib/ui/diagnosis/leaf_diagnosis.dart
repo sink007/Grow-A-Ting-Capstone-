@@ -389,7 +389,12 @@ Widget build(BuildContext context) {
                   const SizedBox(height: 16),
                   const Text(
                     "No previous diagnoses found",
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color:Colors.black54, fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const Text(
+                    "Start diagnosing to dig deeper into plant health!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ],
               ),

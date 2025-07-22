@@ -19,7 +19,7 @@ class UserPlant {
     // print('plant_id is null: ${json['plant_id'] == null}');
     
     if (json['plant_id'] != null) {
-      print('plant_id content: ${json['plant_id']}');
+      // print('plant_id content: ${json['plant_id']}');
     }
 
     return UserPlant(
