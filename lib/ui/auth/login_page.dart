@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '/../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -126,40 +126,48 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // Logo
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(40),
+                      color: Color(0xFFDEF3E0),
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                    child: const Icon(
-                      Icons.eco,
-                      color: Colors.white,
-                      size: 40,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
+
                   const SizedBox(height: 18),
 
                   // App Name
-                  const Text(
-                    'Yaad Garden',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                       Text(
+                        'Yaad Garden',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                       SizedBox(height: 2), 
+                       Text(
+                        'Grow A Ting, Fi Yuhself',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
 
-                  // Tagline
-                  const Text(
-                    'Grow A Ting, Fi Yuhself',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+
 
                   // Login Header
                   const Align(
@@ -206,7 +214,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.green),
+                        borderSide: const BorderSide(color: Color(0xFF399942)),
                       ),
                       filled: true,
                       fillColor: Colors.grey[50],
@@ -257,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.green),
+                        borderSide: const BorderSide(color: Color(0xFF399942)),
                       ),
                       filled: true,
                       fillColor: Colors.grey[50],
@@ -279,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: const Text(
                         'Forgot password?',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: Color(0xFF399942),
                           fontSize: 14,
                         ),
                       ),
@@ -294,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Color(0xFF399942),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -334,7 +342,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: const Text(
                           'Sign up',
                           style: TextStyle(
-                            color: Colors.green,
+                            color: Color(0xFF399942),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
