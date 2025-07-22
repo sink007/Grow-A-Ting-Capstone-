@@ -115,4 +115,6 @@ Future<void> _createUserProfile({
 
   // Listen to auth state changes
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
+
+  void logout() {}
 }

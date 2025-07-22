@@ -6,9 +6,9 @@ class TaskTemplate {
   final int id;
   final String title;
   final String description;
-  final int dayOffset; 
+  final int dayOffset;
   final List<String> steps;
-  
+
   TaskTemplate({
     required this.id,
     required this.title,
@@ -27,7 +27,7 @@ class PlantTask {
   final bool isCompleted;
   final List<TaskStep> steps;
   final bool isOverdue;
-  
+
   PlantTask({
     required this.id,
     required this.userPlantId,
@@ -44,7 +44,7 @@ class TaskStep {
   final int id;
   final String title;
   final bool isCompleted;
-  
+
   TaskStep({
     required this.id,
     required this.title,
@@ -62,9 +62,9 @@ class TaskService {
 
 class PlantTasksWidget extends StatefulWidget {
   final UserPlant userPlant;
-  
+
   const PlantTasksWidget({Key? key, required this.userPlant}) : super(key: key);
-  
+
   @override
   State<PlantTasksWidget> createState() => _PlantTasksWidgetState();
 }
@@ -72,17 +72,17 @@ class PlantTasksWidget extends StatefulWidget {
 class _PlantTasksWidgetState extends State<PlantTasksWidget> {
   List<PlantTask> tasks = [];
   bool isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     loadTasks();
   }
-  
+
   Future<void> loadTasks() async {
     // Just use dummy data for Seed Propagation task
-    await Future.delayed(Duration(milliseconds: 500)); 
-    
+    await Future.delayed(Duration(milliseconds: 500));
+
     final seedPropagationTask = PlantTask(
       id: 1,
       userPlantId: widget.userPlant.plant.plantId,
@@ -92,26 +92,32 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
       isCompleted: false,
       steps: [
         TaskStep(id: 1, title: "Prepare seed starting mix", isCompleted: false),
-        TaskStep(id: 2, title: "Plant seeds at proper depth", isCompleted: false),
-        TaskStep(id: 3, title: "Water gently and consistently", isCompleted: false),
-        TaskStep(id: 4, title: "Place in warm, bright location", isCompleted: false),
-        TaskStep(id: 5, title: "Monitor for germination (7-14 days)", isCompleted: false),
+        TaskStep(
+            id: 2, title: "Plant seeds at proper depth", isCompleted: false),
+        TaskStep(
+            id: 3, title: "Water gently and consistently", isCompleted: false),
+        TaskStep(
+            id: 4, title: "Place in warm, bright location", isCompleted: false),
+        TaskStep(
+            id: 5,
+            title: "Monitor for germination (7-14 days)",
+            isCompleted: false),
       ],
       isOverdue: false,
     );
-    
+
     setState(() {
       tasks = [seedPropagationTask];
       isLoading = false;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (tasks.isEmpty) {
       return Center(
         child: Column(
@@ -133,34 +139,36 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
         ),
       );
     }
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        ...tasks.map((task) => TaskSection(
-          task: task,
-          onStepToggle: _toggleStep,
-        )).toList(),
+        ...tasks
+            .map((task) => TaskSection(
+                  task: task,
+                  onStepToggle: _toggleStep,
+                ))
+            .toList(),
       ],
     );
   }
-  
+
   void _toggleStep(PlantTask task, TaskStep step) {
     setState(() {
       final taskIndex = tasks.indexWhere((t) => t.id == task.id);
       if (taskIndex != -1) {
-        final stepIndex = tasks[taskIndex].steps.indexWhere((s) => s.id == step.id);
+        final stepIndex =
+            tasks[taskIndex].steps.indexWhere((s) => s.id == step.id);
         if (stepIndex != -1) {
-          
           final updatedStep = TaskStep(
             id: step.id,
             title: step.title,
             isCompleted: !step.isCompleted,
           );
-          
+
           final updatedSteps = List<TaskStep>.from(tasks[taskIndex].steps);
           updatedSteps[stepIndex] = updatedStep;
-          
+
           final updatedTask = PlantTask(
             id: task.id,
             userPlantId: task.userPlantId,
@@ -171,7 +179,7 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
             steps: updatedSteps,
             isOverdue: task.isOverdue,
           );
-          
+
           tasks[taskIndex] = updatedTask;
         }
       }
@@ -182,20 +190,20 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
 class TaskSection extends StatefulWidget {
   final PlantTask task;
   final Function(PlantTask, TaskStep) onStepToggle;
-  
+
   const TaskSection({
     Key? key,
     required this.task,
     required this.onStepToggle,
   }) : super(key: key);
-  
+
   @override
   State<TaskSection> createState() => _TaskSectionState();
 }
 
 class _TaskSectionState extends State<TaskSection> {
   bool isExpanded = true;
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -209,7 +217,6 @@ class _TaskSectionState extends State<TaskSection> {
       ),
       child: Column(
         children: [
-          
           InkWell(
             onTap: () => setState(() => isExpanded = !isExpanded),
             borderRadius: BorderRadius.circular(12),
@@ -228,7 +235,9 @@ class _TaskSectionState extends State<TaskSection> {
                     ),
                   ),
                   Icon(
-                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: Colors.green.shade700,
                   ),
                 ],
@@ -241,10 +250,13 @@ class _TaskSectionState extends State<TaskSection> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                children: widget.task.steps.map((step) => StepItem(
-                  step: step,
-                  onToggle: () => widget.onStepToggle(widget.task, step),
-                )).toList(),
+                children: widget.task.steps
+                    .map((step) => StepItem(
+                          step: step,
+                          onToggle: () =>
+                              widget.onStepToggle(widget.task, step),
+                        ))
+                    .toList(),
               ),
             ),
           ],
@@ -252,12 +264,22 @@ class _TaskSectionState extends State<TaskSection> {
       ),
     );
   }
-  
+
   String _formatTodaysDate() {
     final now = DateTime.now();
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[now.month - 1]} ${now.day}';
   }
@@ -266,13 +288,13 @@ class _TaskSectionState extends State<TaskSection> {
 class StepItem extends StatelessWidget {
   final TaskStep step;
   final VoidCallback onToggle;
-  
+
   const StepItem({
     Key? key,
     required this.step,
     required this.onToggle,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -287,18 +309,22 @@ class StepItem extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: step.isCompleted ? Colors.green.shade500 : Colors.green.shade400,
+                  color: step.isCompleted
+                      ? Colors.green.shade500
+                      : Colors.green.shade400,
                   width: 2,
                 ),
-                color: step.isCompleted ? Colors.green.shade500 : Colors.transparent,
+                color: step.isCompleted
+                    ? Colors.green.shade500
+                    : Colors.transparent,
               ),
               child: step.isCompleted
-                ? const Icon(
-                    Icons.check,
-                    size: 14,
-                    color: Colors.white,
-                  )
-                : null,
+                  ? const Icon(
+                      Icons.check,
+                      size: 14,
+                      color: Colors.white,
+                    )
+                  : null,
             ),
           ),
           const SizedBox(width: 12),
@@ -309,7 +335,8 @@ class StepItem extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: step.isCompleted ? Colors.grey.shade600 : Colors.black87,
-                decoration: step.isCompleted ? TextDecoration.lineThrough : null,
+                decoration:
+                    step.isCompleted ? TextDecoration.lineThrough : null,
               ),
             ),
           ),

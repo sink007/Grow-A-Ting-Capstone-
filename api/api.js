@@ -129,16 +129,45 @@ app.get('/user/:user_id/plants', async (req, res) => {
   }
 });
 
+// app.get('/user/:user_id/tasks', async (req, res) => {
+//   try {
+//     const { user_id } = req.params;
+//     const { data } = await supabase
+//       .from('task')
+//       .select('*')
+//       .eq('user_id', user_id)
+//       .order('due_date', { ascending: true });
+//     res.status(200).json(data);
+//   } catch {
+//     res.status(500).send('Failed to retrieve tasks.');
+//   }
+// });
+
 app.get('/user/:user_id/tasks', async (req, res) => {
   try {
     const { user_id } = req.params;
-    const { data } = await supabase
+    
+    // First get user's plants
+    const { data: userPlants } = await supabase
+      .from('user_plants')
+      .select('user_plant_id')
+      .eq('user_id', user_id);
+    
+    if (!userPlants || userPlants.length === 0) {
+      return res.status(200).json([]);
+    }
+    
+    // Then get tasks for those plants
+    const plantIds = userPlants.map(plant => plant.user_plant_id);
+    const { data: tasks } = await supabase
       .from('task')
-      .select('task_id, title, category, image:image_id (url), user_plant_id')
-      .eq('user_id', user_id)
+      .select('*')
+      .in('user_plant_id', plantIds)
       .order('due_date', { ascending: true });
-    res.status(200).json(data);
-  } catch {
+    
+    res.status(200).json(tasks || []);
+  } catch (err) {
+    console.error(err);
     res.status(500).send('Failed to retrieve tasks.');
   }
 });
@@ -200,16 +229,82 @@ app.get('/user/:user_id/diagnoses', async (req, res) => {
   }
 });
 
+// app.post('/user/:user_id/plant/:plant_id', async (req, res) => {
+//   try {
+//     const { user_id, plant_id } = req.params;
+//     await supabase.from('user_plants').insert([{ user_id, plant_id, date: new Date().toISOString() }]);
+//     res.status(201).send('Plant added to user.');
+//   } catch {
+//     res.status(500).send('Failed to add plant to user.');
+//   }
+// });
+
+// Endpoint to create initial tasks when a plant is added
 app.post('/user/:user_id/plant/:plant_id', async (req, res) => {
   try {
     const { user_id, plant_id } = req.params;
-    await supabase.from('user_plants').insert([{ user_id, plant_id, date: new Date().toISOString() }]);
-    res.status(201).send('Plant added to user.');
-  } catch {
-    res.status(500).send('Failed to add plant to user.');
+    
+    // 1. First add the plant to user's garden
+    const { data: userPlant, error: insertError } = await supabase
+      .from('user_plants')
+      .insert({
+        user_id,
+        plant_id,
+        date: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (insertError) throw insertError;
+
+    // 2. Get Seed Propagation tasks from template
+    const { data: templates, error: templateError } = await supabase
+      .from('task_template')
+      .select('*')
+      .eq('category', 'Propagation')
+      .eq('title', 'Seed Propagation');
+
+    if (templateError) throw templateError;
+    if (!templates || templates.length === 0) {
+      return res.status(201).send('Plant added but no tasks template found');
+    }
+
+    const template = templates[0];
+    // const steps = template.steps.split('\n').filter(step => step.trim() !== '');
+
+    const steps = template.steps
+    .split('\n')
+    .map(step => 
+      step
+        .trim()
+        .replace(/^\d+\.\s*/, '')   // remove "1. "
+        .replace(/\.{3,}$/, '')     // remove trailing "..." or "......"
+    )
+    .filter(step => step !== '');
+
+
+    // 3. Create tasks for each step with appropriate due dates
+    const tasks = steps.map((step, index) => ({
+      user_plant_id: userPlant.user_plant_id,
+      template_id: template.template_id,
+      description: step,
+      due_date: new Date().toISOString(), 
+      is_completed: false,
+      progress: 'not_started'
+    }));
+
+    const { error: taskError } = await supabase
+      .from('task')
+      .insert(tasks);
+
+    if (taskError) throw taskError;
+
+    res.status(201).send('Plant and initial tasks added successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to add plant and tasks');
   }
 });
-
 
 
 //Still Not Fixed, Attempting to use = error

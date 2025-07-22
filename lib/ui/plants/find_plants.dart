@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grow_a_ting/ui/plant_detail/plant_detail.dart';
+import 'package:grow_a_ting/widgets/sidemenu_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:grow_a_ting/model/plant.dart';
 import 'dart:convert';
@@ -14,6 +15,8 @@ class FindPlantsPage extends StatefulWidget {
 class _FindPlantsPageState extends State<FindPlantsPage> {
   List<Plant> plants = [];
   List<Plant> filteredPlants = [];
+  String? userEmail;
+
   bool isLoading = true;
   final TextEditingController searchController = TextEditingController();
 
@@ -72,11 +75,14 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
       appBar: AppBar(
         titleSpacing: 0,
         elevation: 0,
-        leading: IconButton(
+        leading: Builder(
+        builder: (context) => IconButton(
           icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () {},
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
+      ),
+      drawer: SideMenu(userEmail: userEmail),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -217,7 +223,7 @@ class PlantCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(
-          color: Colors.grey,
+          color: Color(0xFF399942), 
           width: 1,
         ),
       ),

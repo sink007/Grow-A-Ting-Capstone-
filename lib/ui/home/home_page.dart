@@ -9,6 +9,7 @@ import '../../widgets/weather_card.dart';
 import '../../model/plant.dart';
 import '../../model/user_plant.dart';
 import '../../ui/user_plant/user_plant.dart';
+import '../../widgets/sidemenu_widget.dart';
 import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
@@ -22,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? weatherData;
   bool isLoadingWeather = true;
   String? weatherErrorMessage;
+
+  String? userEmail;
 
   List<UserPlant> userPlants = [];
   bool isLoadingPlants = false;
@@ -58,12 +61,15 @@ class _HomePageState extends State<HomePage> {
         isLoadingPlants = false;
       });
     }
-  }
-
   @override
   void initState() {
     super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    userEmail = user?.email;
+    print('User email: $userEmail');
     fetchWeather();
+    _fetchUserPlants();
+  }
     _fetchUserPlants();
   }
 
@@ -135,35 +141,73 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         elevation: 0,
-        leading: PopupMenuButton<String>(
+       leading: Builder(
+        builder: (context) => IconButton(
           icon: const Icon(Icons.menu, color: Colors.black),
-          onSelected: (value) {
-            if (value == 'diary') {
-              Navigator.pushNamed(context, '/plant_diary');
-            } else if (value == 'diagnosis') {
-              Navigator.pushNamed(context, '/leaf_diagnosis');
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'diary',
-              child: Text('Plant Diary'),
-            ),
-            const PopupMenuItem(
-              value: 'diagnosis',
-              child: Text('Leaf Diagnosis'),
-            ),
-          ],
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWeatherSection(),
-            _buildMyPlantsSection(),
-          ],
-        ),
+      ),
+      drawer: SideMenu(userEmail: userEmail),
+      body: CustomScrollView(
+        slivers: [
+          // Weather section as a regular sliver
+          SliverToBoxAdapter(
+            child: _buildWeatherSection(),
+          ),
+          
+          // Sticky header for "My Plants" section
+          SliverAppBar(
+            automaticallyImplyLeading: false,
+            pinned: true, // This makes it stick
+            floating: false,
+            snap: false,
+            elevation: 0,
+            backgroundColor:  const Color(0xFFFAFAFA),
+            toolbarHeight: 70,
+            flexibleSpace: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'My Plants',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/plants/find');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF399942),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Plants content
+          SliverToBoxAdapter(
+            child: _buildPlantsContent(),
+          ),
+        ],
       ),
     );
   }
@@ -216,7 +260,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             const Text(
               'Lost in the weeds—no signal!',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF399942),
@@ -305,7 +349,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Helper method using UserPlant wrapper
   String _calculatePlantAge(DateTime plantedDate) {
     final DateTime now = DateTime.now();
     final int daysDiff = now.difference(plantedDate).inDays;
@@ -320,7 +363,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Helper methods using Plant model for nested plant data
   String _getWateringInfo(Plant plant) {
     return plant.water ?? 'Unknown';
   }
@@ -329,276 +371,14 @@ class _HomePageState extends State<HomePage> {
     return plant.sunlight ?? 'Unknown';
   }
 
-  // Updated My Plants Section with proper models
-//   Widget _buildMyPlantsSection() {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               const Text(
-//                 'My Plants',
-//                 style: TextStyle(
-//                   fontSize: 32,
-//                   fontWeight: FontWeight.w500,
-//                 ),
-//               ),
-//               InkWell(
-//                 onTap: () {
-//                   Navigator.pushNamed(context, '/plants/find');
-//                 },
-//                 child: Container(
-//                   padding: const EdgeInsets.all(6),
-//                   decoration: const BoxDecoration(
-//                     color: Color(0xFF399942),
-//                     shape: BoxShape.circle,
-//                   ),
-//                   child: const Icon(
-//                     Icons.add,
-//                     color: Colors.white,
-//                     size: 24,
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 24),
-
-//           // Loading state
-//           if (isLoadingPlants)
-//             const Center(
-//               child: CircularProgressIndicator(
-//                 color: Color(0xFF399942),
-//               ),
-//             )
-
-//           // Plants grid using UserPlant wrapper for clean access
-//           else if (userPlants.isNotEmpty)
-//             GridView.builder(
-//               shrinkWrap: true,
-//               physics: const NeverScrollableScrollPhysics(),
-//               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//                 crossAxisCount: 1,
-//                 childAspectRatio: 2,
-//                 crossAxisSpacing: 16,
-//                 mainAxisSpacing: 16,
-//               ),
-//               itemCount: userPlants.length,
-//               itemBuilder: (context, index) {
-//                 final userPlant = userPlants[index];
-//                 final plant = userPlant.plant; // Clean access to Plant model
-
-//                 return Container(
-//                   decoration: BoxDecoration(
-//                     color: Colors.white,
-//                     borderRadius: BorderRadius.circular(12),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: Colors.black.withOpacity(0.1),
-//                         spreadRadius: 1,
-//                         blurRadius: 8,
-//                         offset: Offset(0, 4),
-//                       ),
-//                     ],
-//                   ),
-//                   child: Padding(
-//                     padding: const EdgeInsets.all(16),
-//                     child: Row(
-//                       children: [
-//                         // Plant Image
-//                         Expanded(
-//                           flex: 2,
-//                           child: Container(
-//                             height: double.infinity,
-//                             decoration: BoxDecoration(
-//                               color: const Color(0xFFD3D3D3),
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                             child: plant.imageUrl != null
-//                                 ? ClipRRect(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                     child: Image.network(
-//                                       plant.imageUrl!,
-//                                       fit: BoxFit.cover,
-//                                       errorBuilder:
-//                                           (context, error, stackTrace) {
-//                                         return const Center(
-//                                           child: Icon(
-//                                             Icons.local_florist,
-//                                             size: 40,
-//                                             color: Colors.grey,
-//                                           ),
-//                                         );
-//                                       },
-//                                     ),
-//                                   )
-//                                 : const Center(
-//                                     child: Icon(
-//                                       Icons.local_florist,
-//                                       size: 40,
-//                                       color: Colors.grey,
-//                                     ),
-//                                   ),
-//                           ),
-//                         ),
-//                         const SizedBox(width: 25),
-
-//                         // Plant Info
-//                         Expanded(
-//                           flex: 3,
-//                           child: Column(
-//                             mainAxisAlignment: MainAxisAlignment.center,
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-
-//                               Text(
-//                                 plant.commonName,
-//                                 style: const TextStyle(
-//                                   fontSize: 16,
-//                                   fontWeight: FontWeight.w600,
-//                                   color: Color(0xFF399942),
-//                                 ),
-//                                 maxLines: 1,
-//                                 overflow: TextOverflow.ellipsis,
-//                               ),
-//                               const SizedBox(height: 8),
-
-//                               // Age info using UserPlant date
-//                               Row(
-//                                 children: [
-//                                   const Icon(Icons.calendar_today,
-//                                       size: 16, color: Colors.red),
-//                                   const SizedBox(width: 6),
-//                                   Expanded(
-//                                     child: Text(
-//                                       _calculatePlantAge(userPlant
-//                                           .date), // Clean access to user plant date
-//                                       style: const TextStyle(
-//                                           fontSize: 12, color: Colors.black),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                               const SizedBox(height: 6),
-
-//                               // Watering info using Plant model
-//                               Row(
-//                                 children: [
-//                                   const Icon(Icons.water_drop,
-//                                       size: 16, color: Colors.blue),
-//                                   const SizedBox(width: 6),
-//                                   Expanded(
-//                                     child: Text(
-//                                       'every ${_getWateringInfo(plant)}',
-//                                       style: const TextStyle(
-//                                           fontSize: 12, color: Colors.black),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                               const SizedBox(height: 6),
-
-//                               // Sunlight info using Plant model
-//                               Row(
-//                                 children: [
-//                                   const Icon(Icons.wb_sunny,
-//                                       size: 16, color: Colors.orange),
-//                                   const SizedBox(width: 6),
-//                                   Expanded(
-//                                     child: Text(
-//                                       _getSunlightInfo(plant),
-//                                       style: const TextStyle(
-//                                           fontSize: 12, color: Colors.black),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 );
-//               },
-//             )
-
-//           // Empty state
-//           else
-//             Center(
-//               child: Column(
-//                 children: [
-//                   Image.asset(
-//                     'assets/images/potted-plants.png',
-//                     height: 220,
-//                   ),
-//                   const SizedBox(height: 16),
-//                   const Text(
-//                     'No plants yet',
-//                     style: TextStyle(
-//                       fontSize: 20,
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 8),
-//                   const Text(
-//                     'Tap the + button to add your first plant!',
-//                     style: TextStyle(
-//                       fontSize: 14,
-//                       color: Colors.grey,
-//                     ),
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//           const SizedBox(height: 24),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-  Widget _buildMyPlantsSection() {
+  // Separated plants content without the header
+  Widget _buildPlantsContent() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'My Plants',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, '/plants/find');
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF399942),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8), // Small spacing from sticky header
+          
           if (isLoadingPlants)
             const Center(
               child: CircularProgressIndicator(
@@ -606,16 +386,11 @@ class _HomePageState extends State<HomePage> {
               ),
             )
           else if (userPlants.isNotEmpty)
-            GridView.builder(
+            ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 1,
-                childAspectRatio: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
               itemCount: userPlants.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final userPlant = userPlants[index];
                 final plant = userPlant.plant;
@@ -633,6 +408,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   child: Container(
+                    constraints: const BoxConstraints(minHeight: 160),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -647,111 +423,116 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD3D3D3),
-                                borderRadius: BorderRadius.circular(8),
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD3D3D3),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: plant.imageUrl != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          plant.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Center(
+                                              child: Icon(
+                                                Icons.local_florist,
+                                                size: 40,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : const Center(
+                                        child: Icon(
+                                          Icons.local_florist,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                               ),
-                              child: plant.imageUrl != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        plant.imageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Icon(
-                                              Icons.local_florist,
-                                              size: 40,
-                                              color: Colors.grey,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.local_florist,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
                             ),
-                          ),
-                          const SizedBox(width: 25),
+                            const SizedBox(width: 20),
 
-                          // Plant Info
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  plant.commonName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF399942),
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      plant.commonName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF399942),
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.calendar_today,
-                                        size: 16, color: Colors.red),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        _calculatePlantAge(userPlant.date),
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.black),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today,
+                                          size: 14, color: Colors.red),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          _calculatePlantAge(userPlant.date),
+                                          style: const TextStyle(
+                                              fontSize: 12, color: Colors.black),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.water_drop,
-                                        size: 16, color: Colors.blue),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        'Every ${_getWateringInfo(plant)}',
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.black),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.water_drop,
+                                          size: 14, color: Colors.blue),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Every ${_getWateringInfo(plant)}',
+                                          style: const TextStyle(
+                                              fontSize: 12, color: Colors.black),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.wb_sunny,
-                                        size: 16, color: Colors.orange),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        _getSunlightInfo(plant),
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.black),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.wb_sunny,
+                                          size: 14, color: Colors.orange),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          _getSunlightInfo(plant),
+                                          style: const TextStyle(
+                                              fontSize: 12, color: Colors.black),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -786,6 +567,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+          
           const SizedBox(height: 24),
         ],
       ),
