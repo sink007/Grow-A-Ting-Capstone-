@@ -28,7 +28,7 @@ List<Widget> _pages = [
   const HomePage(),
   const FindPlantsPage(),
   const RemindersPage(),
-  const CheckUpPage(),
+  const LeafDiagnosisPage(),
 ];
 
 class MyApp extends StatefulWidget {
@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
       supportedLocales: FLocalizations.supportedLocales,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFFAFAFA),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF399942)),
         useMaterial3: true,
       ),
       builder: (context, child) =>
@@ -65,6 +65,11 @@ class _MyAppState extends State<MyApp> {
         '/plants/find': (context) => const FindPlantsPage(),
         '/plant_diary': (context) => const PlantDiaryPage(),
         '/leaf_diagnosis': (context) => const LeafDiagnosisPage(),
+        '/reminders': (context) => const RemindersPage(),
+        '/logout': (context) {
+          authService.logout();
+          return const LoginPage();
+        },
       },
     );
   }
@@ -113,16 +118,6 @@ class RemindersPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(child: Text('Reminders Page')),
-    );
-  }
-}
-
-class CheckUpPage extends StatelessWidget {
-  const CheckUpPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Check Up Page')),
     );
   }
 }
