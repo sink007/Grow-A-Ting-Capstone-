@@ -1,5 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class PlantDiaryPage extends StatefulWidget {
   const PlantDiaryPage({super.key});
@@ -12,11 +18,29 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
+  List<XFile> _selectedImages = [];
+
   @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        _selectedImages.add(image);
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
   }
 
   @override
@@ -58,13 +82,52 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
       ),
       body: Column(
         children: [
+          if (_selectedImages.isNotEmpty)
+            SizedBox(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _selectedImages.length,
+                itemBuilder: (context, index) {
+                  return Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.all(8),
+                        child: Image.file(
+                          File(_selectedImages[index].path),
+                          height: 100,
+                          width: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
-                autofocus: true, // Keyboard appears when page opens
+                autofocus: false, // Keyboard appears when page opens
                 maxLines: null,
                 decoration: const InputDecoration(
                   hintText: 'Add notes...',
@@ -78,19 +141,15 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 IconButton(
                   icon: const Icon(Icons.camera_alt, color: Color(0xFF399942)),
-                  onPressed: () {
-                    // Add camera logic here
-                  },
+                  onPressed: () => _pickImage(ImageSource.camera),
                 ),
                 IconButton(
                   icon: const Icon(Icons.photo, color: Color(0xFF399942)),
-                  onPressed: () {
-                    // Add gallery logic here
-                  },
+                  onPressed: () => _pickImage(ImageSource.gallery),
                 ),
               ],
             ),
