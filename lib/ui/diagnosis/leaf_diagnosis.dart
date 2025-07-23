@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'scan_camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'scan_camera.dart'; // adjust path if needed
 
 class LeafDiagnosisPage extends StatefulWidget {
   const LeafDiagnosisPage({super.key});
@@ -79,12 +81,12 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
 
   Future<void> _loadModel() async {
     _interpreter =
-        await Interpreter.fromAsset('assets/diagnosis/plant_modelV2.tflite');
+    await Interpreter.fromAsset('assets/diagnosis/plant_modelV2.tflite');
   }
 
   Future<void> _loadClassNames() async {
-    final jsonString =
-        await rootBundle.loadString('assets/diagnosis/classV2_names.json');
+    final jsonString = await rootBundle.loadString(
+        'assets/diagnosis/classV2_names.json');
     final List<dynamic> jsonList = json.decode(jsonString);
     _classNames = jsonList.cast<String>();
   }
@@ -99,8 +101,9 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
           .select('*, diagnosis (plant_type, timestamp, user_id)')
           .order('diagnosis_date', ascending: false);
 
-      final filtered =
-          res.where((r) => r['diagnosis']['user_id'] == userId).toList();
+      final filtered = res
+          .where((r) => r['diagnosis']['user_id'] == userId)
+          .toList();
 
       setState(() {
         _diagnosisHistory = List<Map<String, dynamic>>.from(filtered);
@@ -140,17 +143,15 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     if (oriImage == null) return;
 
     final resized = img.copyResize(oriImage, width: 256, height: 256);
-    final input = List.generate(
-        1,
-        (_) => List.generate(
-            256,
-            (y) => List.generate(256, (x) {
-                  final pixel = resized.getPixel(x, y);
-                  return [pixel.r / 255.0, pixel.g / 255.0, pixel.b / 255.0];
-                })));
+    final input = List.generate(1, (_) =>
+        List.generate(256, (y) =>
+            List.generate(256, (x) {
+              final pixel = resized.getPixel(x, y);
+              return [pixel.r / 255.0, pixel.g / 255.0, pixel.b / 255.0];
+            })));
 
-    var output =
-        List.filled(_classNames.length, 0.0).reshape([1, _classNames.length]);
+    var output = List.filled(_classNames.length, 0.0).reshape(
+        [1, _classNames.length]);
     _interpreter.run(input, output);
 
     final rawOutput = output[0] as List<double>;
@@ -170,8 +171,8 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       filtered[i] = total > 0 ? filtered[i] / total : 0.0;
     }
 
-    final maxIndex = filtered
-        .indexWhere((v) => v == filtered.reduce((a, b) => a > b ? a : b));
+    final maxIndex = filtered.indexWhere((v) =>
+    v == filtered.reduce((a, b) => a > b ? a : b));
     final prediction = _classNames[maxIndex];
     final confidence = filtered[maxIndex];
 
@@ -179,15 +180,15 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     String solution = '';
     if (prediction.toLowerCase().contains('early_blight')) {
       description =
-          'Early blight is a common disease in potato caused by a fungus.';
+      'Early blight is a common disease in potato caused by a fungus.';
       solution =
-          'Remove infected leaves. Apply a fungicide if necessary. Practice crop rotation.';
+      'Remove infected leaves. Apply a fungicide if necessary. Practice crop rotation.';
     } else if (prediction.toLowerCase().contains('gray_leaf') ||
         prediction.toLowerCase().contains('cercospora')) {
       description =
-          'Gray leaf spot is a fungal disease affecting corn, causing rectangular lesions.';
+      'Gray leaf spot is a fungal disease affecting corn, causing rectangular lesions.';
       solution =
-          'Avoid overhead watering. Use resistant varieties. Apply fungicides early if needed.';
+      'Avoid overhead watering. Use resistant varieties. Apply fungicides early if needed.';
     } else if (prediction.toLowerCase().contains('healthy')) {
       description = 'The plant appears healthy.';
       solution = 'Continue proper care and regular monitoring.';
@@ -198,7 +199,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
 
     setState(() {
       _result =
-          "$prediction\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
+      "$prediction\nConfidence: ${(confidence * 100).toStringAsFixed(2)}%";
     });
 
     try {
@@ -210,7 +211,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       final uploadRes = await _supabase.storage
           .from('private-uploads')
           .uploadBinary(path, imageBytes,
-              fileOptions: const FileOptions(contentType: 'image/jpeg'));
+          fileOptions: const FileOptions(contentType: 'image/jpeg'));
 
       print('✅ Upload key: $uploadRes');
 
@@ -224,30 +225,22 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         print("⚠️ Failed to create signed URL: $e");
       }
 
-      final imageInsert = await _supabase
-          .from('image')
-          .insert({
-            'img_name': fileName,
-            'file_path': path,
-            'signed_key': signedUrl,
-            'date_info': now.toIso8601String(),
-          })
-          .select()
-          .single();
+      final imageInsert = await _supabase.from('image').insert({
+        'img_name': fileName,
+        'file_path': path,
+        'signed_key': signedUrl,
+        'date_info': now.toIso8601String(),
+      }).select().single();
       final imageId = imageInsert['image_id'];
       print("✅ Image DB row inserted: $imageId");
 
-      final diagnosisInsert = await _supabase
-          .from('diagnosis')
-          .insert({
-            'user_id': userId,
-            'image_id': imageId,
-            'result': [prediction],
-            'timestamp': now.toIso8601String(),
-            'plant_type': [_selectedCrop],
-          })
-          .select()
-          .single();
+      final diagnosisInsert = await _supabase.from('diagnosis').insert({
+        'user_id': userId,
+        'image_id': imageId,
+        'result': [prediction],
+        'timestamp': now.toIso8601String(),
+        'plant_type': [_selectedCrop],
+      }).select().single();
       final diagnosisId = diagnosisInsert['diagnosis_id'];
       print("✅ Diagnosis DB row inserted: $diagnosisId");
 
@@ -267,193 +260,145 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     }
   }
 
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text(
-              'Leaf Diagnosis',
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-      centerTitle: true,
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ListView(
-        children: [
-          const SizedBox(height: 16),
-          // Modern Dropdown with white background menu
-          DropdownButtonFormField<String>(
-            value: _selectedCrop,
-            hint: const Text('Select Crop Type'),
-            onChanged: (value) {
-              setState(() {
-                _selectedCrop = value!;
-                _result = null;
-                _image = null;
-              });
-            },
-            items: plantDiseaseMap.keys.map((crop) {
-              return DropdownMenuItem<String>(
-                value: crop,
-                child: Text(crop),
-              );
-            }).toList(),
-            decoration: InputDecoration(
-              labelText: 'Crop Type',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade400),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Leaf Diagnosis'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            const SizedBox(height: 16), // Shift dropdown down
+            DropdownButtonFormField<String>(
+              value: _selectedCrop,
+              hint: const Text('Select Crop Type'), // 👈 This shows default text
+              onChanged: (value) {
+                setState(() {
+                  _selectedCrop = value!;
+                  _result = null;
+                  _image = null;
+                });
+              },
+              items: plantDiseaseMap.keys.map((crop) {
+                return DropdownMenuItem<String>(
+                  value: crop,
+                  child: Text(crop),
+                );
+              }).toList(),
+              decoration: const InputDecoration(
+                labelText: 'Select Crop Type',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade400),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              filled: true,
-              fillColor: Colors.grey.shade50,
             ),
-            dropdownColor: Colors.white, // White background for dropdown menu
-            menuMaxHeight: 300, // Prevent menu from being too tall
-            isExpanded: true, // Ensure menu aligns properly below field
-          ),
-
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              
-              ElevatedButton.icon(
-                onPressed: () => _pickImageFromSource(ImageSource.gallery),
-                icon: const Icon(Icons.image, size: 20),
-                label: const Text('Gallery', style: TextStyle(fontSize: 14)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 2,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _pickImageFromSource(ImageSource.gallery),
+                  icon: const Icon(Icons.image),
+                  label: const Text('Gallery'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade100),
                 ),
-              ),
-              
-              ElevatedButton.icon(
-                onPressed: () => _pickImageFromSource(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt, size: 20),
-                label: const Text('Camera', style: TextStyle(fontSize: 14)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 2,
-                ),
-              ),
-            ],
-          ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (_selectedCrop == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please select a crop type first.")),
+                      );
+                      return;
+                    }
 
-          const SizedBox(height: 20),
-         
-          const SizedBox(height: 16),
-          if (_result != null)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                border: Border.all(color: Colors.green.shade300),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _result!,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-          const SizedBox(height: 30),
-          const Text(
-            'Previous Diagnoses',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 40),
-          if (_diagnosisHistory.isEmpty)
-              Column(
-                children: [
-                  Image.asset('assets/images/potted-plants.png', height: 150),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "No previous diagnoses found",
-                    style: TextStyle(color:Colors.black54, fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  const Text(
-                    "Start diagnosing to dig deeper into plant health!",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              ),
-          ..._diagnosisHistory.map((entry) =>
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(entry['result'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          )),
-                      const SizedBox(height: 8),
-                      Text("Crop: ${entry['diagnosis']['plant_type']}",
-                        style: TextStyle(color: Colors.grey.shade700)),
-                      const SizedBox(height: 4),
-                      Text("Confidence: ${(entry['diagnosis_confidence'] * 100).toStringAsFixed(2)}%",
-                        style: TextStyle(color: Colors.grey.shade700)),
-                      const SizedBox(height: 4),
-                      Text("Description: ${entry['description']}",
-                        style: TextStyle(color: Colors.grey.shade700)),
-                      const SizedBox(height: 4),
-                      Text("Solution: ${entry['solution']}",
-                        style: TextStyle(color: Colors.grey.shade700)),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          entry['diagnosis']['timestamp']
-                              .toString()
-                              .split('T')
-                              .first,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScanCameraPage(
+                          onImageCaptured: _runDiagnosis, // auto-run your model
                         ),
                       ),
-                    ],
+                    );
+                  },
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Camera'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade100,
                   ),
                 ),
-              )),
-        ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_image != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(_image!, height: 200),
+              ),
+            const SizedBox(height: 16),
+            if (_result != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  border: Border.all(color: Colors.green),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _result!,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            const SizedBox(height: 30),
+            const Text(
+              'Previous Diagnoses',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            if (_diagnosisHistory.isEmpty)
+              const Center(child: Text("No previous diagnoses found.")),
+            ..._diagnosisHistory.map((entry) =>
+                Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(entry['result'],
+                            style: const TextStyle(fontWeight: FontWeight
+                                .bold)),
+                        const SizedBox(height: 4),
+                        Text("Crop: ${entry['diagnosis']['plant_type']}"),
+                        Text("Confidence: ${(entry['diagnosis_confidence'] *
+                            100).toStringAsFixed(2)}%"),
+                        Text("Description: ${entry['description']}"),
+                        Text("Solution: ${entry['solution']}"),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            entry['diagnosis']['timestamp']
+                                .toString()
+                                .split('T')
+                                .first,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-
-
-
-
-
-
-
-
+    );
+  }
 }
