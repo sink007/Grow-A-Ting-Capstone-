@@ -59,6 +59,7 @@ class _UserPlantPageState extends State<UserPlantPage>
   @override
   Widget build(BuildContext context) {
     final plant = widget.plant;
+    // final user = Supabase.instance.client.auth.currentUser;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
