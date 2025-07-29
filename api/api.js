@@ -879,7 +879,7 @@ app.get('/user/:user_id/plants', async (req, res) => {
       .from('user_plants')
       .select(`user_plant_id, date, plant_id (plant_id, 
         common_name, scientific_name, description, image_url, watering, watering_condition,
-        pruning, sunlight, growth_stages, tools_needed
+        pruning, sunlight, growth_stages, tools_needed, ideal_temperature
       )`)
       .eq('user_id', user_id);
 

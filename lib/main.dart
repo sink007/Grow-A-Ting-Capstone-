@@ -11,6 +11,7 @@ import 'ui/plants/find_plants.dart';
 import 'ui/plant_diary/plant_diary.dart';
 import 'ui/diagnosis/leaf_diagnosis.dart';
 import 'services/auth_service.dart';
+import 'ui/reminders/reminders.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,12 +113,12 @@ class _MyAppState extends State<MyApp> {
 }
 
 // Placeholder pages
-class RemindersPage extends StatelessWidget {
-  const RemindersPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Reminders Page')),
-    );
-  }
-}
+// class RemindersPage extends StatelessWidget {
+//   const RemindersPage({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Scaffold(
+//       body: Center(child: Text('Reminders Page')),
+//     );
+//   }
+// }
