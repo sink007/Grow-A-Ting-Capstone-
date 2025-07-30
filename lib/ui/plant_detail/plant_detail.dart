@@ -244,7 +244,7 @@ class PlantDetailsPage extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(height: 20), // Space for bottom button
+                    const SizedBox(height: 20), 
                   ],
                 ],
               ),
@@ -322,68 +322,6 @@ class PlantDetailsPage extends StatelessWidget {
     }
   }
 
-  // Future<void> addToGarden(BuildContext context) async {
-  //   try {
-  //     final user = Supabase.instance.client.auth.currentUser;
-  //     if (user == null) {
-  //       throw Exception('User not authenticated');
-  //     }
-
-  //     // Print debugging info
-  //     // print('User ID: ${user.id}');
-  //     // print('Plant ID: ${plant.plantId}');
-  //     // print(
-  //     //     'POST URL: http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}');
-  //     // print('User role: ${user.role}');
-
-  //     // Make API call to your backend
-  //     final response = await http.post(
-  //       Uri.parse(
-  //           'http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}'),
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //     );
-
-  //     if (response.statusCode != 201) {
-  //       throw Exception('API call failed with status: ${response.statusCode}');
-  //     }
-
-  //     if (!context.mounted) return;
-
-  //     // Show success message
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('${plant.commonName} added to your garden!'),
-  //         backgroundColor: Colors.green,
-  //         behavior: SnackBarBehavior.floating,
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //         ),
-  //         margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
-  //       ),
-  //     );
-
-  //     Navigator.pop(context);
-  //   } catch (e) {
-  //     if (!context.mounted) return;
-
-  //     // Handle errors
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text(
-  //             'Failed to add ${plant.commonName} to your garden: ${e.toString()}'),
-  //         backgroundColor: Colors.red,
-  //         behavior: SnackBarBehavior.floating,
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //         ),
-  //         margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
-  //       ),
-  //     );
-  //   }
-  // }
-
   Future<void> addToGarden(BuildContext context) async {
   try {
     final user = Supabase.instance.client.auth.currentUser;
@@ -424,8 +362,6 @@ class PlantDetailsPage extends StatelessWidget {
     );
   }
 }
-
-
 }
 
 

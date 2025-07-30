@@ -1,4 +1,3 @@
-// Plant model to structure the data
 class Plant {
   final int plantId;
   final String commonName;
@@ -8,7 +7,7 @@ class Plant {
   final String? water;
   final String? sunlight;
   
-  // New fields for plant details
+  
   final String? type;
   final List<GrowthStage> growthStages;
   final List<Tool> toolsNeeded;
@@ -33,15 +32,7 @@ class Plant {
   });
 
   factory Plant.fromJson(Map<String, dynamic> json) {
-    // print('=== Plant.fromJson Debug ===');
-    // print('Received json:  ${json['plant_id']}');
-    // print('json type: ${json.runtimeType}');
-    
-    // // ignore: unnecessary_null_comparison
-    // if (json == null) {
-    //   print('ERROR: json is null!');
-    //   throw Exception('Plant JSON is null');
-    // }
+  
     return Plant(
       plantId: json['plant_id'],
       commonName: json['common_name'],

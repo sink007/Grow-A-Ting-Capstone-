@@ -111,14 +111,3 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
-// Placeholder pages
-// class RemindersPage extends StatelessWidget {
-//   const RemindersPage({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Scaffold(
-//       body: Center(child: Text('Reminders Page')),
-//     );
-//   }
-// }

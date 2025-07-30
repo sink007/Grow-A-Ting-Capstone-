@@ -77,14 +77,14 @@ class SideMenu extends StatelessWidget {
             
             
              // Divider
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      child: Divider(
-                        color: Color(0xFFE0E0E0),
-                        thickness: 1,
-                      ),
-                    ),
-                    
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Divider(
+                color: Color(0xFFE0E0E0),
+                thickness: 1,
+              ),
+            ),
+            
             const SizedBox(height: 10),
             
             // Menu Items

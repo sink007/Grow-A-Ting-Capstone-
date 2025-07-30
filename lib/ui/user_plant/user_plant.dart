@@ -220,7 +220,7 @@ class _UserPlantPageState extends State<UserPlantPage>
               data: Theme.of(context).copyWith(
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
-                dividerColor: Colors.transparent, // removes default bottom gray line
+                dividerColor: Colors.transparent, 
               ),
               child: TabBar(
                 controller: _tabController,

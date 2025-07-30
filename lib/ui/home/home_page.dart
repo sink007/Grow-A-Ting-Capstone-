@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/weather_card.dart';
+import '../../widgets/weather_alert_card.dart';
+import '../weather_alert/weather_alert_page.dart';
 import '../../model/plant.dart';
 import '../../model/user_plant.dart';
 import '../../ui/user_plant/user_plant.dart';
@@ -24,9 +25,7 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? weatherData;
   bool isLoadingWeather = true;
   String? weatherErrorMessage;
-
   String? userEmail;
-
   List<UserPlant> userPlants = [];
   bool isLoadingPlants = false;
 
@@ -36,7 +35,6 @@ class _HomePageState extends State<HomePage> {
     print('🚀 HomePage initState called');
     final user = Supabase.instance.client.auth.currentUser;
     userEmail = user?.email;
-    print('👤 User email: $userEmail');
     print('🆔 User ID: ${user?.id}');
     fetchWeather();
     _fetchUserPlants();
@@ -64,27 +62,19 @@ class _HomePageState extends State<HomePage> {
 
       print('🔍 Fetching plants for user: ${user.id}');
       final url = 'http://10.0.2.2:3000/user/${user.id}/plants';
-      print('🌐 API URL: $url');
       
       final response = await http.get(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('📡 API Response Status: ${response.statusCode}');
-      // print('📦 API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('📊 Parsed data length: ${data.length}');
-        print('📋 First item (if exists): ${data.isNotEmpty ? data.first : 'No data'}');
-        
         if (mounted) {
           setState(() {
             userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
-            print('✅ User plants updated: ${userPlants.length} plants');
             for (int i = 0; i < userPlants.length; i++) {
-              print('🌿 Plant $i: ${userPlants[i].plant.commonName}');
             }
           });
         }
@@ -101,22 +91,24 @@ class _HomePageState extends State<HomePage> {
           isLoadingPlants = false;
         });
       }
-      print('🏁 _fetchUserPlants completed');
+      print(' _fetchUserPlants completed');
     }
   }
 
   Future<void> fetchWeather() async {
-    print('🌤️ Starting fetchWeather');
     try {
       LocationData locationData = await _getCurrentLocation();
-      print('📍 Location obtained: ${locationData.latitude}, ${locationData.longitude}');
       
       final data = await WeatherService.fetchWeatherFromCoordinates(
         locationData.latitude!,
         locationData.longitude!,
       );
 
-      print('🌤️ Weather data received');
+      //TESTING: Override temperature in weather data BEFORE setting state
+      // data['main']['temp'] = 35.0;
+      // print('🌡️ Temperature overridden to: ${data['main']['temp']}°C');
+
+
       if (mounted) {
         setState(() {
           weatherData = data;
@@ -159,6 +151,85 @@ class _HomePageState extends State<HomePage> {
     return await location.getLocation();
   }
 
+  // Temperature Alert Methods
+  List<TemperatureAlert> _generateTemperatureAlerts(List<UserPlant> plants, double currentTemp) {
+    List<TemperatureAlert> alerts = [];
+    for (UserPlant userPlant in plants) {
+      final plant = userPlant.plant;
+      final idealTemp = plant.idealTemperature;
+      // Skip plants without temperature data
+      if (idealTemp == null) {
+        continue;
+      }
+      
+      if (currentTemp > idealTemp.max) {
+        alerts.add(TemperatureAlert(
+          plantName: plant.commonName,
+          message: "Max temperature for ${plant.commonName} is ${idealTemp.max}°C. Relocate to a shaded area or use a breathable tarp to reduce heat stress.",
+          type: AlertType.tooHot,
+        ));
+      } else if (currentTemp < idealTemp.min) {
+        alerts.add(TemperatureAlert(
+          plantName: plant.commonName,
+          message: "Min temperature for ${plant.commonName} is ${idealTemp.min}°C. Protect plants by moving to a warmer location.",
+          type: AlertType.tooCold,
+        ));
+      } else {
+      }
+    }
+    
+    print('🚨 Generated ${alerts.length} temperature alerts');
+    return alerts;
+  }
+
+  double? _getCurrentTemperature() {
+    if (weatherData == null) return null;
+    return weatherData!['main']['temp']?.toDouble();
+  }
+
+  bool _hasTemperatureAlerts() {
+    final currentTemp = _getCurrentTemperature();
+    if (currentTemp == null) return false;
+    
+    final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
+    return alerts.isNotEmpty;
+  }
+
+  
+Widget _buildTemperatureAlertSection() {
+  
+  if (isLoadingWeather || weatherData == null || userPlants.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  final currentTemp = _getCurrentTemperature();
+  
+  if (currentTemp == null) {
+    print('❌ Current temperature is null');
+    return const SizedBox.shrink();
+  }
+
+  final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
+  print('🚨 Generated ${alerts.length} alerts');
+  
+  return WeatherAlertCard(
+    alerts: alerts,
+    currentTemperature: currentTemp,
+    onSeeAllPressed: alerts.length > 2 ? () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WeatherAlertPage(
+            alerts: alerts,
+            currentTemperature: currentTemp,
+          ),
+        ),
+      );
+    } : null,
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     print('🔄 Building HomePage widget');
@@ -188,29 +259,34 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         elevation: 0,
-       leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.black),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
-      ),
       ),
       drawer: SideMenu(userEmail: userEmail),
       body: CustomScrollView(
         slivers: [
-          // Weather section as a regular sliver
+          // Weather section
           SliverToBoxAdapter(
             child: _buildWeatherSection(),
+          ),
+          
+          // Temperature Alert section
+          SliverToBoxAdapter(
+            child: _buildTemperatureAlertSection(),
           ),
           
           // Sticky header for "My Plants" section
           SliverAppBar(
             automaticallyImplyLeading: false,
-            pinned: true, // This makes it stick
+            pinned: true,
             floating: false,
             snap: false,
             elevation: 0,
-            backgroundColor:  const Color(0xFFFAFAFA),
+            backgroundColor: const Color(0xFFFAFAFA),
             toolbarHeight: 70,
             flexibleSpace: SafeArea(
               child: Container(
@@ -363,71 +439,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _getErrorMessage(String error) {
-    if (error.contains('Location services are disabled')) {
-      return 'Please enable location services in your device settings.';
-    } else if (error.contains('Location permissions are denied')) {
-      return 'Please allow location access to get weather for your area.';
-    } else if (error.contains('Failed to fetch weather')) {
-      return 'Unable to connect to weather service. Check your internet connection.';
-    } else {
-      return 'Something went wrong. Please try again.';
-    }
-  }
-
-  String _getWeatherIconPath(String condition) {
-    switch (condition) {
-      case 'Clear':
-        return 'assets/images/clear.png';
-      case 'Clouds':
-        return 'assets/images/clouds.png';
-      case 'Rain':
-        return 'assets/images/rain.png';
-      case 'Drizzle':
-        return 'assets/images/rain.png';
-      case 'Thunderstorm':
-        return 'assets/images/thunderstorm.png';
-      case 'Snow':
-        return 'assets/images/snow.png';
-      case 'Mist':
-      case 'Fog':
-      case 'Haze':
-        return 'assets/images/fog.png';
-      default:
-        return 'assets/images/clouds.png';
-    }
-  }
-
-  String _calculatePlantAge(DateTime plantedDate) {
-    final DateTime now = DateTime.now();
-    final int daysDiff = now.difference(plantedDate).inDays;
-    final int weeks = daysDiff ~/ 7;
-
-    if (weeks == 0) {
-      return '$daysDiff days old';
-    } else if (weeks == 1) {
-      return '1 week old';
-    } else {
-      return '$weeks weeks old';
-    }
-  }
-
-  String _getWateringInfo(Plant plant) {
-    return plant.water ?? 'Unknown';
-  }
-
-  String _getSunlightInfo(Plant plant) {
-    return plant.sunlight ?? 'Unknown';
-  }
-
-  // Separated plants content without the header
   Widget _buildPlantsContent() {
-    print('🎨 Building plants content. Plants count: ${userPlants.length}');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          const SizedBox(height: 8), // Small spacing from sticky header
+          const SizedBox(height: 8),
           
           if (isLoadingPlants)
             const Center(
@@ -491,8 +508,7 @@ class _HomePageState extends State<HomePage> {
                                         child: Image.network(
                                           plant.imageUrl!,
                                           fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
+                                          errorBuilder: (context, error, stackTrace) {
                                             return const Center(
                                               child: Icon(
                                                 Icons.local_florist,
@@ -513,7 +529,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 20),
-
                             Expanded(
                               flex: 3,
                               child: Column(
@@ -536,14 +551,19 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
-                                      const Icon(Icons.calendar_today,
-                                          size: 14, color: Colors.red),
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        size: 14,
+                                        color: Colors.red,
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           _calculatePlantAge(userPlant.date),
                                           style: const TextStyle(
-                                              fontSize: 12, color: Colors.black),
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -551,14 +571,19 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      const Icon(Icons.water_drop,
-                                          size: 14, color: Colors.blue),
+                                      const Icon(
+                                        Icons.water_drop,
+                                        size: 14,
+                                        color: Colors.blue,
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           'Every ${_getWateringInfo(plant)}',
                                           style: const TextStyle(
-                                              fontSize: 12, color: Colors.black),
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -566,14 +591,19 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      const Icon(Icons.wb_sunny,
-                                          size: 14, color: Colors.orange),
+                                      const Icon(
+                                        Icons.wb_sunny,
+                                        size: 14,
+                                        color: Colors.orange,
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           _getSunlightInfo(plant),
                                           style: const TextStyle(
-                                              fontSize: 12, color: Colors.black),
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -623,5 +653,63 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  // Helper Methods
+  String _getErrorMessage(String error) {
+    if (error.contains('Location services are disabled')) {
+      return 'Please enable location services in your device settings.';
+    } else if (error.contains('Location permissions are denied')) {
+      return 'Please allow location access to get weather for your area.';
+    } else if (error.contains('Failed to fetch weather')) {
+      return 'Unable to connect to weather service. Check your internet connection.';
+    } else {
+      return 'Something went wrong. Please try again.';
+    }
+  }
+
+  String _getWeatherIconPath(String condition) {
+    switch (condition) {
+      case 'Clear':
+        return 'assets/images/clear.png';
+      case 'Clouds':
+        return 'assets/images/clouds.png';
+      case 'Rain':
+        return 'assets/images/rain.png';
+      case 'Drizzle':
+        return 'assets/images/rain.png';
+      case 'Thunderstorm':
+        return 'assets/images/thunderstorm.png';
+      case 'Snow':
+        return 'assets/images/snow.png';
+      case 'Mist':
+      case 'Fog':
+      case 'Haze':
+        return 'assets/images/fog.png';
+      default:
+        return 'assets/images/clouds.png';
+    }
+  }
+
+  String _calculatePlantAge(DateTime plantedDate) {
+    final DateTime now = DateTime.now();
+    final int daysDiff = now.difference(plantedDate).inDays;
+    final int weeks = daysDiff ~/ 7;
+
+    if (weeks == 0) {
+      return '$daysDiff days old';
+    } else if (weeks == 1) {
+      return '1 week old';
+    } else {
+      return '$weeks weeks old';
+    }
+  }
+
+  String _getWateringInfo(Plant plant) {
+    return plant.water ?? 'Unknown';
+  }
+
+  String _getSunlightInfo(Plant plant) {
+    return plant.sunlight ?? 'Unknown';
   }
 }

@@ -5,7 +5,6 @@ import 'dart:convert';
 import '../model/user_plant.dart';
 import '../model/plant_task.dart';
 
-// Task Template model
 class TaskTemplate {
   final int templateId;
   final String title;
@@ -116,7 +115,6 @@ class TaskService {
       }
     } catch (e) {
       print('⚠️ Error checking recurring tasks: $e');
-      // Don't throw error - this is background operation
     }
   }
 
@@ -136,7 +134,6 @@ class TaskService {
     }
   }
 
-  // Updated method to trigger recurring task scheduling when propagation completes
   static Future<void> updateTaskCompletion(int taskId, bool isCompleted) async {
     try {
       final user = _supabase.auth.currentUser;
@@ -146,7 +143,6 @@ class TaskService {
 
       print('🔄 Updating task $taskId with completion: $isCompleted');
 
-      // First, get the current task to check its details
       final taskResponse = await _supabase
           .from('task')
           .select('''
@@ -202,7 +198,6 @@ class TaskService {
     }
   }
 
-  // Trigger the recurring task check via API
   static Future<void> _triggerRecurringTaskCheck(int userPlantId) async {
     try {
       final url = '$baseUrl/api/check-and-schedule-tasks';
@@ -220,11 +215,9 @@ class TaskService {
       }
     } catch (e) {
       print('⚠️ Error triggering recurring task check: $e');
-      // Don't throw error - main task update should still succeed
     }
   }
 
-  // New method to manually refresh and extend tasks
   static Future<void> refreshAndExtendTasks(int userPlantId) async {
     try {
       final url = '$baseUrl/api/extend-recurring-tasks';
@@ -246,7 +239,6 @@ class TaskService {
   }
 }
 
-// Updated PlantTasksWidget with refresh functionality
 class PlantTasksWidget extends StatefulWidget {
   final UserPlant userPlant;
 
@@ -290,8 +282,6 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
       });
     }
   }
-
-  // Add refresh functionality
   Future<void> _refreshTasks() async {
     try {
       // First extend any recurring tasks if needed
@@ -321,7 +311,6 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
 
   Future<void> _toggleTaskCompletion(PlantTask task) async {
     try {
-      // Optimistically update UI
       final newIsCompleted = !task.isCompleted;
       String newProgress;
 
