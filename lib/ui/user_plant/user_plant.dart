@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../model/plant.dart';
 import '../../model/user_plant.dart';
 import '../../widgets/plant_timeline_widget.dart';
@@ -25,16 +26,142 @@ class _UserPlantPageState extends State<UserPlantPage>
   late TabController _tabController;
   int _currentIndex = 1;
 
+  List<Map<String, dynamic>> _diaryEntries = [];
+  bool _isLoadingDiary = false;
+
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
-    _tabController.addListener(() {
-      setState(() {
-        _currentIndex = _tabController.index;
+    void initState() {
+      super.initState();
+      _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
+      _tabController.addListener(() {
+        setState(() {
+          _currentIndex = _tabController.index;
+        });
+
+        // Fetch diary data when diary tab is selected
+        if (_tabController.index == 2 && _diaryEntries.isEmpty) {
+          _fetchDiaryEntries();
+        }
       });
-    });
-  }
+    }
+
+    Future<void> _fetchDiaryEntries() async {
+      if (_isLoadingDiary) return;
+
+      setState(() {
+        _isLoadingDiary = true;
+      });
+
+      try {
+        final supabase = Supabase.instance.client;
+        final currentUser = supabase.auth.currentUser;
+
+        if (currentUser == null) {
+          print('No authenticated user found');
+          return;
+        }
+
+        // 1. Get the diary for this user
+        final diaryResponse = await supabase
+            .from('diary')
+            .select('diary_id')
+            .eq('user_id', currentUser.id)
+            .limit(1);
+
+        if (diaryResponse.isEmpty) {
+          print('No diary found for user');
+          setState(() {
+            _diaryEntries = [];
+            _isLoadingDiary = false;
+          });
+          return;
+        }
+
+        final diaryId = diaryResponse.first['diary_id'];
+
+        // 2. Get diary entries
+        final entriesResponse = await supabase
+            .from('diary_entry')
+            .select('entry_id, note, entry_date')
+            .eq('diary_id', diaryId)
+            .order('entry_date', ascending: false);
+
+        // 3. For each entry, get all associated images
+        List<Map<String, dynamic>> processedEntries = [];
+
+        for (var entry in entriesResponse) {
+          // Get all images for this entry through diary_images junction table
+          final imagesResponse = await supabase.from('diary_images').select('''
+                image:image_id (
+                  image_id,
+                  url,
+                  img_name,
+                  file_path
+                )
+              ''').eq('entry_id', entry['entry_id']);
+
+          // Process images to get signed URLs
+          List<Map<String, dynamic>> processedImages = [];
+
+          for (var imageEntry in imagesResponse) {
+            if (imageEntry['image'] != null &&
+                imageEntry['image']['file_path'] != null) {
+              try {
+                final signedUrl = await supabase.storage
+                    .from('private-uploads')
+                    .createSignedUrl(
+                        imageEntry['image']['file_path'], 3600); // 1 hour expiry
+
+                processedImages.add({
+                  'image_id': imageEntry['image']['image_id'],
+                  'image_url': signedUrl,
+                  'image_name': imageEntry['image']['img_name'],
+                });
+              } catch (e) {
+                print(
+                    'Error creating signed URL for image ${imageEntry['image']['image_id']}: $e');
+                // Fallback to public URL if available
+                processedImages.add({
+                  'image_id': imageEntry['image']['image_id'],
+                  'image_url': imageEntry['image']['url'],
+                  'image_name': imageEntry['image']['img_name'],
+                });
+              }
+            }
+          }
+
+          Map<String, dynamic> processedEntry = {
+            'entry_id': entry['entry_id'],
+            'note': entry['note'],
+            'entry_date': entry['entry_date'],
+            'images': processedImages, // Array of all images for this entry
+          };
+
+          processedEntries.add(processedEntry);
+        }
+
+        setState(() {
+          _diaryEntries = processedEntries;
+          _isLoadingDiary = false;
+        });
+
+        print('✅ Loaded ${processedEntries.length} diary entries');
+      } catch (e) {
+        print('Error fetching diary entries: $e');
+        setState(() {
+          _isLoadingDiary = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading diary entries: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
 
   @override
   void dispose() {
@@ -254,7 +381,12 @@ class _UserPlantPageState extends State<UserPlantPage>
               children: [
                 PlantTimelineWidget(userPlant: widget.userPlant),
                 PlantTasksWidget(userPlant: widget.userPlant),
-                PlantDiaryWidget(userPlant: widget.userPlant),
+                PlantDiaryWidget(
+                    userPlant: widget.userPlant,
+                    diaryEntries: _diaryEntries,
+                    isLoading: _isLoadingDiary,
+                    onRefresh: _fetchDiaryEntries,
+                  ),
               ],
             ),
           ),

@@ -40,7 +40,7 @@ class TaskTemplate {
 
 // Updated Task service with 2-week filtering and recurring task management
 class TaskService {
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'https://grow-a-ting-capstone.onrender.com';
   static final _supabase = Supabase.instance.client;
 
   // Updated method to fetch tasks for next 2 weeks only

@@ -331,7 +331,7 @@ class PlantDetailsPage extends StatelessWidget {
 
     // Use the original endpoint URL
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/user/${user.id}/plant/${plant.plantId}'),
+      Uri.parse('https://grow-a-ting-capstone.onrender.com/user/${user.id}/plant/${plant.plantId}'),
       headers: {
         'Content-Type': 'application/json',
       },

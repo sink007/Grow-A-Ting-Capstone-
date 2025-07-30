@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
       }
 
       print('🔍 Fetching plants for user: ${user.id}');
-      final url = 'http://10.0.2.2:3000/user/${user.id}/plants';
+      final url = 'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
       
       final response = await http.get(
         Uri.parse(url),

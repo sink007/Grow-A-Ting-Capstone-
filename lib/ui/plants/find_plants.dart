@@ -20,7 +20,7 @@ class _FindPlantsPageState extends State<FindPlantsPage> {
   bool isLoading = true;
   final TextEditingController searchController = TextEditingController();
 
-  static const String apiUrl = 'http://10.0.2.2:3000/plants';
+  static const String apiUrl = 'https://grow-a-ting-capstone.onrender.com/plants';
 
   @override
   void initState() {

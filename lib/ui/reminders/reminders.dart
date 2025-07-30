@@ -37,7 +37,7 @@ class _RemindersPageState extends State<RemindersPage> {
     fetchTasksWithPlantData();
   }
 
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'https://grow-a-ting-capstone.onrender.com';
 
   Future<void> fetchTasksWithPlantData() async {
     try {
