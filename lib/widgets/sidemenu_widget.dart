@@ -118,13 +118,6 @@ class SideMenu extends StatelessWidget {
                       route: '/reminders',
                     ),
 
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.book,
-                      title: 'Diary',
-                      route: '/plant_diary',
-                    ),
-                    
                     // Divider
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
