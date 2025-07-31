@@ -15,7 +15,7 @@ class PlantTimelineWidget extends StatefulWidget {
 }
 
 class _PlantTimelineWidgetState extends State<PlantTimelineWidget> {
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'https://grow-a-ting-capstone.onrender.com';
   List<PlantTask> completedTasks = [];
   bool isLoading = true;
 

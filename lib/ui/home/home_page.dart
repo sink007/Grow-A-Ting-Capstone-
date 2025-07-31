@@ -21,7 +21,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
   Map<String, dynamic>? weatherData;
   bool isLoadingWeather = true;
   String? weatherErrorMessage;
@@ -36,64 +36,95 @@ class _HomePageState extends State<HomePage> {
     final user = Supabase.instance.client.auth.currentUser;
     userEmail = user?.email;
     print('🆔 User ID: ${user?.id}');
+
+    WidgetsBinding.instance.addObserver(this);
+
     fetchWeather();
     _fetchUserPlants();
   }
 
-  Future<void> _fetchUserPlants() async {
-    print('🌱 Starting _fetchUserPlants');
-    if (!mounted) {
-      print('❌ Widget not mounted, returning');
-      return;
-    }
-    
-    if (mounted) {
-      setState(() {
-        isLoadingPlants = true;
-      });
-    }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) {
-        print('❌ User not authenticated');
-        throw Exception('User not authenticated');
-      }
-
-      print('🔍 Fetching plants for user: ${user.id}');
-      final url = 'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
-      
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
-            for (int i = 0; i < userPlants.length; i++) {
-            }
-          });
-        }
-      } else {
-        print('❌ Failed to load plants: ${response.statusCode}');
-        print('❌ Error body: ${response.body}');
-      }
-    } catch (e, stackTrace) {
-      print('💥 Error fetching plants: $e');
-      print('📍 Stack trace: $stackTrace');
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoadingPlants = false;
-        });
-      }
-      print(' _fetchUserPlants completed');
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _fetchUserPlants();
     }
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _fetchUserPlants();
+        }
+      });
+    }
+  }
+
+
+  Future<void> _fetchUserPlants() async {
+  print('🌱 Starting _fetchUserPlants');
+  if (!mounted) {
+    print('❌ Widget not mounted, returning');
+    return;
+  }
+  
+  if (mounted) {
+    setState(() {
+      isLoadingPlants = true;
+    });
+  }
+
+  try {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      print('❌ User not authenticated');
+      throw Exception('User not authenticated');
+    }
+
+    print('🔍 Fetching plants for user: ${user.id}');
+    final url = 'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
+    
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      if (mounted) {
+        setState(() {
+          userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
+          
+          userPlants.sort((a, b) => b.date.compareTo(a.date));
+          
+        });
+      }
+    } else {
+      print('❌ Failed to load plants: ${response.statusCode}');
+      print('❌ Error body: ${response.body}');
+    }
+  } catch (e, stackTrace) {
+    print('💥 Error fetching plants: $e');
+    print('📍 Stack trace: $stackTrace');
+  } finally {
+    if (mounted) {
+      setState(() {
+        isLoadingPlants = false;
+      });
+    }
+    print('✅ _fetchUserPlants completed');
+  }
+}
 
   Future<void> fetchWeather() async {
     try {

@@ -350,7 +350,9 @@ class PlantDetailsPage extends StatelessWidget {
       ),
     );
 
-    Navigator.pop(context);
+  Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+  
+
   } catch (e) {
     if (!context.mounted) return;
 
