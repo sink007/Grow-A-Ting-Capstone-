@@ -61,13 +61,11 @@ class _UserPlantPageState extends State<UserPlantPage>
         return;
       }
 
-      // 1. Get the diary for this user
       final diaryResponse = await supabase
           .from('diary')
           .select('diary_id')
-          .eq('user_id', currentUser.id) // Use the plant ID from the widget
+          .eq('user_id', currentUser.id) 
           .limit(1);
-      print("the id is ${widget.userPlant.plant.plantId}");
 
       if (diaryResponse.isEmpty) {
         print('No diary found for user');
@@ -147,7 +145,6 @@ class _UserPlantPageState extends State<UserPlantPage>
         _isLoadingDiary = false;
       });
 
-      print('✅ Loaded ${processedEntries.length} diary entries');
     } catch (e) {
       print('Error fetching diary entries: $e');
       setState(() {

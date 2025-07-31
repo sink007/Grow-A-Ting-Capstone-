@@ -51,11 +51,12 @@ class _CareGuidePageState extends State<CareGuidePage> with TickerProviderStateM
         });
       }
     } catch (e) {
-      print('Error loading harvest data: $e');
+      
       setState(() {
         _isLoadingHarvest = false;
       });
     }
+    
   }
 
   void _onScroll() {

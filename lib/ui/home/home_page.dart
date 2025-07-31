@@ -35,7 +35,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
     print('🚀 HomePage initState called');
     final user = Supabase.instance.client.auth.currentUser;
     userEmail = user?.email;
-    print('🆔 User ID: ${user?.id}');
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -72,9 +71,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
 
 
   Future<void> _fetchUserPlants() async {
-  print('🌱 Starting _fetchUserPlants');
   if (!mounted) {
-    print('❌ Widget not mounted, returning');
+    print('Widget not mounted, returning');
     return;
   }
   
@@ -87,11 +85,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
   try {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      print('❌ User not authenticated');
+
       throw Exception('User not authenticated');
     }
 
-    print('🔍 Fetching plants for user: ${user.id}');
     final url = 'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
     
     final response = await http.get(
@@ -110,19 +107,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
         });
       }
     } else {
-      print('❌ Failed to load plants: ${response.statusCode}');
-      print('❌ Error body: ${response.body}');
+      print('Failed to load plants: ${response.statusCode}');
+      print('Error body: ${response.body}');
     }
   } catch (e, stackTrace) {
-    print('💥 Error fetching plants: $e');
-    print('📍 Stack trace: $stackTrace');
+    print('Error fetching plants: $e');
+    print('Stack trace: $stackTrace');
   } finally {
     if (mounted) {
       setState(() {
         isLoadingPlants = false;
       });
     }
-    print('✅ _fetchUserPlants completed');
+    print('_fetchUserPlants completed');
   }
 }
 
@@ -137,7 +134,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
 
       //TESTING: Override temperature in weather data BEFORE setting state
       // data['main']['temp'] = 35.0;
-      // print('🌡️ Temperature overridden to: ${data['main']['temp']}°C');
+      // print(' Temperature overridden to: ${data['main']['temp']}°C');
 
 
       if (mounted) {
@@ -146,11 +143,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
           isLoadingWeather = false;
           weatherErrorMessage = null;
         });
-        print('✅ Weather state updated');
       }
     } catch (e, stackTrace) {
-      print('💥 Error fetching weather: $e');
-      print('📍 Stack trace: $stackTrace');
+      print('Error fetching weather: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           isLoadingWeather = false;
@@ -209,7 +205,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
       }
     }
     
-    print('🚨 Generated ${alerts.length} temperature alerts');
     return alerts;
   }
 
@@ -236,12 +231,10 @@ Widget _buildTemperatureAlertSection() {
   final currentTemp = _getCurrentTemperature();
   
   if (currentTemp == null) {
-    print('❌ Current temperature is null');
     return const SizedBox.shrink();
   }
 
   final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
-  print('🚨 Generated ${alerts.length} alerts');
   
   return WeatherAlertCard(
     alerts: alerts,
@@ -263,10 +256,6 @@ Widget _buildTemperatureAlertSection() {
 
   @override
   Widget build(BuildContext context) {
-    print('🔄 Building HomePage widget');
-    print('🌤️ Weather loading: $isLoadingWeather');
-    print('🌱 Plants loading: $isLoadingPlants');
-    print('📊 Plants count: ${userPlants.length}');
     
     return Scaffold(
       appBar: AppBar(

@@ -48,11 +48,10 @@ class TaskService {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
-        print('❌ User not authenticated');
+        print('User not authenticated');
         throw Exception('User not authenticated');
       }
 
-      print('🔍 Fetching tasks for user: ${user.id}');
       
       // Calculate date range (today + 2 weeks)
       final now = DateTime.now();
@@ -75,27 +74,26 @@ class TaskService {
           .eq('user_plant_id', userPlant.userPlantId)
           .gte('due_date', today.toIso8601String().split('T')[0])
           .lte('due_date', twoWeeksFromNow.toIso8601String().split('T')[0])
-          .order('due_date', ascending: true);
+          .order('due_date', ascending: true)
+          .order('task_id', ascending: true); 
 
-      print('📋 Received ${response.length} tasks for next 2 weeks');
 
       final tasks = response
           .map((taskJson) => PlantTask.fromJson(taskJson))
           .toList();
 
       // Sort tasks: overdue first, then by due date
-      tasks.sort((a, b) {
-        if (a.isOverdue && !b.isOverdue) return -1;
-        if (!a.isOverdue && b.isOverdue) return 1;
-        return a.dueDate.compareTo(b.dueDate);
-      });
+      // tasks.sort((a, b) {
+      //   if (a.isOverdue && !b.isOverdue) return -1;
+      //   if (!a.isOverdue && b.isOverdue) return 1;
+      //   return a.dueDate.compareTo(b.dueDate);
+      // });
 
       // Check if we need to extend recurring tasks (do this in background)
       _checkAndExtendRecurringTasks(userPlant.userPlantId);
 
       return tasks;
     } catch (e) {
-      print('❌ Error fetching tasks: $e');
       throw Exception('Error fetching tasks: $e');
     }
   }
@@ -111,14 +109,13 @@ class TaskService {
       );
       
       if (response.statusCode == 200) {
-        print('✅ Recurring tasks check completed');
       }
     } catch (e) {
-      print('⚠️ Error checking recurring tasks: $e');
+      throw Exception('Error updating task: $e');
+
     }
   }
 
-  // Fetch task template details
   static Future<TaskTemplate> fetchTaskTemplate(int templateId) async {
     try {
       final response = await _supabase
@@ -129,7 +126,6 @@ class TaskService {
 
       return TaskTemplate.fromJson(response);
     } catch (e) {
-      print('❌ Error fetching task template: $e');
       throw Exception('Error fetching task template: $e');
     }
   }
@@ -140,8 +136,6 @@ class TaskService {
       if (user == null) {
         throw Exception('User not authenticated');
       }
-
-      print('🔄 Updating task $taskId with completion: $isCompleted');
 
       final taskResponse = await _supabase
           .from('task')
@@ -185,15 +179,12 @@ class TaskService {
           DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).toIso8601String() : null,
       }).eq('task_id', taskId);
 
-      print('✅ Task $taskId updated successfully');
 
       // If this was a propagation task being completed, check if all propagation is done
       if (isCompleted && category == 'Propagation') {
-        print('🌱 Propagation task completed, checking if recurring tasks should start...');
         await _triggerRecurringTaskCheck(userPlantId);
       }
     } catch (e) {
-      print('❌ Error updating task: $e');
       throw Exception('Error updating task: $e');
     }
   }
@@ -209,12 +200,9 @@ class TaskService {
       
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('✅ Recurring task check result: ${result['message']}');
       } else {
-        print('⚠️ Failed to trigger recurring task check: ${response.statusCode}');
       }
     } catch (e) {
-      print('⚠️ Error triggering recurring task check: $e');
     }
   }
 
@@ -228,12 +216,10 @@ class TaskService {
       );
       
       if (response.statusCode == 200) {
-        print('✅ Tasks refreshed and extended');
       } else {
         throw Exception('Failed to refresh tasks: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Error refreshing tasks: $e');
       throw Exception('Error refreshing tasks: $e');
     }
   }
@@ -343,8 +329,6 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
 
       // Update in Supabase
       await TaskService.updateTaskCompletion(task.taskId, newIsCompleted);
-
-      print('✅ Task ${task.taskId} toggled successfully');
     } catch (e) {
       // Revert UI changes on error
       setState(() {
@@ -491,14 +475,62 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
     }
 
     // Group tasks by date
-    final Map<String, List<PlantTask>> tasksByDate = {};
-    for (final task in tasks) {
-      final dateKey = _formatDate(task.dueDate);
-      if (!tasksByDate.containsKey(dateKey)) {
-        tasksByDate[dateKey] = [];
-      }
-      tasksByDate[dateKey]!.add(task);
+    // final Map<String, List<PlantTask>> tasksByDate = {};
+    // for (final task in tasks) {
+    //   final dateKey = _formatDate(task.dueDate);
+    //   if (!tasksByDate.containsKey(dateKey)) {
+    //     tasksByDate[dateKey] = [];
+    //   }
+    //   tasksByDate[dateKey]!.add(task);
+    // }
+
+  // Group tasks by date 
+  final Map<String, List<PlantTask>> tasksByDate = {};
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  
+  // Separate overdue and non-overdue tasks while maintaining order
+  final List<PlantTask> overdueTasks = [];
+  final List<PlantTask> otherTasks = [];
+  
+  for (final task in tasks) {
+    final taskDate = DateTime(task.dueDate.year, task.dueDate.month, task.dueDate.day);
+    if (taskDate.isBefore(today)) {
+      overdueTasks.add(task);
+    } else {
+      otherTasks.add(task);
     }
+  }
+  
+  // Group overdue tasks
+  if (overdueTasks.isNotEmpty) {
+    tasksByDate['Overdue'] = overdueTasks;
+  }
+  
+  // Group other tasks by their actual dates
+  for (final task in otherTasks) {
+    final dateKey = _formatDate(task.dueDate);
+    if (!tasksByDate.containsKey(dateKey)) {
+      tasksByDate[dateKey] = [];
+    }
+    tasksByDate[dateKey]!.add(task);
+  }
+
+  // Create ordered list of sections - Overdue first, then chronological
+  final List<MapEntry<String, List<PlantTask>>> orderedSections = [];
+  
+  if (tasksByDate.containsKey('Overdue')) {
+    orderedSections.add(MapEntry('Overdue', tasksByDate['Overdue']!));
+  }
+  
+  // Add other sections in chronological order
+  final otherEntries = tasksByDate.entries
+      .where((entry) => entry.key != 'Overdue')
+      .toList();
+  
+  // Sort other entries by the first task's date in each group
+  otherEntries.sort((a, b) => a.value.first.dueDate.compareTo(b.value.first.dueDate));
+  orderedSections.addAll(otherEntries);
 
     return RefreshIndicator(
       onRefresh: _refreshTasks,
@@ -511,7 +543,7 @@ class _PlantTasksWidgetState extends State<PlantTasksWidget> {
                 onTaskToggle: _toggleTaskCompletion,
                 onTaskInfo: _showTaskInfo,
               )),
-          // Add spacing at bottom
+          
           const SizedBox(height: 80),
         ],
       ),

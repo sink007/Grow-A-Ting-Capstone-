@@ -26,7 +26,6 @@ class _PlantTimelineWidgetState extends State<PlantTimelineWidget> {
   }
 
   double _calculateLineHeight(int numTasks) {
-    // Estimate line height based on number of task rows (each ~32–40 pixels tall with padding)
     return 32.0 * numTasks;
   }
 
@@ -34,7 +33,7 @@ class _PlantTimelineWidgetState extends State<PlantTimelineWidget> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
-        print('❌ User not authenticated');
+        print('User not authenticated');
         throw Exception('User not authenticated');
       }
 
