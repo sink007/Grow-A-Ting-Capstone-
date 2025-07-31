@@ -96,7 +96,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     required String description,
     required String solution,
     required File image,
-    double? confidence, // ✅ Make this optional
+    double? confidence,
   }) {
     showDialog(
       context: context,
@@ -106,7 +106,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         description: description,
         solution: solution,
         image: image,
-        confidence: confidence, // ✅ Pass as nullable
+        confidence: confidence,
         onClose: () {
           setState(() {
             _image = null;
@@ -163,7 +163,12 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       return;
     }
 
-    final picked = await _picker.pickImage(source: source);
+    final picked = await _picker.pickImage(
+      source: source,
+      imageQuality: 60,
+      maxWidth: 2048,
+    );
+
     if (picked != null) {
       final file = File(picked.path);
 
@@ -215,7 +220,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
   Future<void> _runDiagnosis(File imageFile) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      print("No user logged in");
+      print("❌ No user logged in");
       return;
     }
 
@@ -235,7 +240,9 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       return;
     }
 
-    final oriImage = img.decodeImage(await imageFile.readAsBytes());
+    final bytes = await imageFile.readAsBytes();
+
+    img.Image? oriImage = img.decodeImage(bytes);
     if (oriImage == null) return;
 
     final resized = img.copyResize(oriImage, width: 224, height: 224);
@@ -253,21 +260,12 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     final allowedLabels = plantDiseaseMap[_selectedCrop]!;
     final allowedSet = allowedLabels.map((e) => e.trim()).toSet();
 
-    print(' Checking matches for $_selectedCrop...');
-    print('Allowed: $allowedSet');
-
     final allowedIndices = <int>[];
     for (int i = 0; i < _classNames.length; i++) {
       final modelLabel = _classNames[i].trim();
       if (allowedSet.contains(modelLabel)) {
         allowedIndices.add(i);
       }
-    }
-
-    if (allowedIndices.isEmpty) {
-      print("No matching labels found for $_selectedCrop");
-      setState(() => _result = ' No matching disease labels for $_selectedCrop');
-      return;
     }
 
     final filtered = List<double>.filled(_classNames.length, 0);
@@ -286,7 +284,6 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     final prediction = _classNames[maxIndex];
     final confidence = filtered[maxIndex];
 
-    // Optional description/solution logic
     String description = '';
     String solution = '';
     if (prediction.contains('Early Blight')) {
@@ -350,8 +347,6 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         confidence: confidence
     );
 
-
-
     try {
       final now = DateTime.now();
       final fileName = "${now.millisecondsSinceEpoch}.jpg";
@@ -375,12 +370,10 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         return;
       }
 
-      // Optional: confirm file appears in folder list
       final files = await _supabase.storage
           .from('private-uploads')
           .list(path: folder);
 
-      // Create signed URL with retry
       String signedUrl = '';
       try {
         signedUrl = await _supabase.storage
@@ -391,7 +384,6 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         print("Signed URL failed first try: $e");
       }
 
-      // Insert image record
       int imageId;
       try {
         final imageInsert = await _supabase.from('image').insert({
@@ -479,13 +471,13 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            "About This System:\n"
+                            "⚠️ About This System:\n"
                                 "This system uses AI to detect plant diseases. While trained for accuracy, AI can still make mistakes. "
                                 " Each crop currently supports a limited set of diseases — more crops and their respective diseases will be added in the future.",
                           ),
                           SizedBox(height: 16),
                           Text(
-                            "Supported Diseases:",
+                            "✅ Supported Diseases:",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 10),
@@ -593,10 +585,10 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            const SizedBox(height: 16), // Shift dropdown down
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedCrop,
-              hint: const Text('Select Crop Type'), 
+              hint: const Text('Select Crop Type'),
               onChanged: (value) {
                 setState(() {
                   _selectedCrop = value!;
@@ -611,7 +603,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                 );
               }).toList(),
               decoration: const InputDecoration(
-                labelText: 'Crop Type',
+                labelText: 'Select Crop Type',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12),
               ),
@@ -640,7 +632,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ScanCameraPage(
-                          onImageCaptured: _runDiagnosis, // auto-run your model
+                          onImageCaptured: _runDiagnosis,
                         ),
                       ),
                     );
@@ -675,12 +667,8 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
               'Previous Diagnoses',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 80),
+            const SizedBox(height: 10),
             if (_diagnosisHistory.isEmpty)
-              Image.asset(
-                'assets/images/potted-plants.png',
-                height: 150,
-              ),
               const Center(child: Text("No previous diagnoses found.")),
             ..._diagnosisHistory.map((entry) {
               final rawName = (entry['result'] ?? '') as String;
