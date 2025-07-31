@@ -535,8 +535,8 @@ class _PlantDiaryWidgetState extends State<PlantDiaryWidget> {
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () =>
-                                          _showEntryOptions(context, entry),
+                                      // onTap: () =>
+                                      //_showEntryOptions(context, entry),
                                       child: const Icon(
                                         Icons.more_horiz,
                                         color: Colors.black54,
@@ -558,15 +558,16 @@ class _PlantDiaryWidgetState extends State<PlantDiaryWidget> {
 
       // Floating Action Button to add new entry
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const PlantDiaryPage(),
+              builder: (context) =>
+                  PlantDiaryPage(plantId: widget.userPlant.plant.plantId),
             ),
-          ).then((_) {
-            widget.onRefresh();
-          });
+          );
+
+          widget.onRefresh();
         },
         backgroundColor: const Color(0xFF399942),
         child: const Icon(Icons.add, color: Colors.white),
@@ -727,39 +728,39 @@ class _PlantDiaryWidgetState extends State<PlantDiaryWidget> {
     );
   }
 
-  void _showEntryOptions(BuildContext context, Map<String, dynamic> entry) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit, color: Color(0xFF399942)),
-              title: const Text('Edit Entry'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Navigate to edit entry page
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Entry'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation(context, entry);
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
+  // void _showEntryOptions(BuildContext context, Map<String, dynamic> entry) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //     ),
+  //     builder: (context) => Container(
+  //       padding: const EdgeInsets.all(20),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           ListTile(
+  //             leading: const Icon(Icons.edit, color: Color(0xFF399942)),
+  //             title: const Text('Edit Entry'),
+  //             onTap: () {
+  //               Navigator.pop(context);
+  //               // TODO: Navigate to edit entry page
+  //             },
+  //           ),
+  //           ListTile(
+  //             leading: const Icon(Icons.delete, color: Colors.red),
+  //             title: const Text('Delete Entry'),
+  //             onTap: () {
+  //               Navigator.pop(context);
+  //               _showDeleteConfirmation(context, entry);
+  //             },
+  //           ),
+  //           const SizedBox(height: 10),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   void _showDeleteConfirmation(
       BuildContext context, Map<String, dynamic> entry) {

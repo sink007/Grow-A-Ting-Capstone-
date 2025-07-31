@@ -343,11 +343,11 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
     }
 
     _showDiagnosisPopup(
-      title: prediction,
-      description: description,
-      solution: solution.contains('\n') ? solution : solution.replaceAll('. ', '.\n'),
-      image: imageFile,
-      confidence: confidence
+        title: prediction,
+        description: description,
+        solution: solution.contains('\n') ? solution : solution.replaceAll('. ', '.\n'),
+        image: imageFile,
+        confidence: confidence
     );
 
 
@@ -473,7 +473,7 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
-                                "1. Select your crop type.\n"
+                            "1. Select your crop type.\n"
                                 "2. Upload or take a picture of the leaf.\n"
                                 "3. Wait for the system to analyze the image and show results.",
                           ),
@@ -730,6 +730,4 @@ class _LeafDiagnosisPageState extends State<LeafDiagnosisPage> {
       ),
     );
   }
-
-
 }
