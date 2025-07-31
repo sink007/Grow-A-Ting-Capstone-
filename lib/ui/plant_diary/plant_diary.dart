@@ -11,7 +11,9 @@ import 'dart:convert';
 import '../../services/auth_service.dart';
 
 class PlantDiaryPage extends StatefulWidget {
-  const PlantDiaryPage({super.key});
+  final int? plantId; // Add this line
+
+  const PlantDiaryPage({super.key, this.plantId}); // Update constructor
 
   @override
   State<PlantDiaryPage> createState() => _PlantDiaryPageState();
@@ -149,9 +151,36 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
             'diary_id': int.parse(diaryId),
             'note': note.isNotEmpty ? note : null,
             'entry_date': now,
+            'plant_id': widget.plantId
           })
           .select('entry_id')
           .single();
+
+      // Update the diary with the plant_id if needed
+      // Replace 1 with the actual plant_id you want to associate
+
+      // await supabase.from('diary').update({'plant_id': widget.plantId}).eq(
+      //     'diary_id', int.parse(diaryId));
+
+      // final invdiaryEntryResponse = await supabase
+      //     .from('diary')
+      //     .insert({
+      //       'diary_id': int.parse(diaryId),
+      //       'note': note.isNotEmpty ? note : null,
+      //       'entry_date': now,
+      //     })
+      //     .select('entry_id')
+      //     .single();
+
+      // final diaryResponse = await supabase
+      //     .from('diary')
+      //     .select('diary_id')
+      //     .eq('user_id', currentUser.id)
+      //     .eq(
+      //         'plant_id',
+      //         plant.plantId) // Use the plant ID from the widget
+      //     .limit(1);
+      // print("the id is ${widget.userPlant.plant.plantId}");
 
       final entryId = diaryEntryResponse['entry_id'];
 
@@ -220,7 +249,7 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
         setState(() {
           _selectedImages.clear();
         });
-        Navigator.pop(context);
+        // Navigator.pop(context);
       }
     } catch (e) {
       // Handle error
@@ -299,7 +328,9 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
                 await _saveDiaryEntry();
                 // Only navigate back if save was successful (handled in _saveDiaryEntry)
                 if (_controller.text.isEmpty && _selectedImages.isEmpty) {
-                  Navigator.pop(context);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
                 }
               },
               child: const Text(

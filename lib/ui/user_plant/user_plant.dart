@@ -30,68 +30,70 @@ class _UserPlantPageState extends State<UserPlantPage>
   bool _isLoadingDiary = false;
 
   @override
-    void initState() {
-      super.initState();
-      _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
-      _tabController.addListener(() {
-        setState(() {
-          _currentIndex = _tabController.index;
-        });
-
-        // Fetch diary data when diary tab is selected
-        if (_tabController.index == 2 && _diaryEntries.isEmpty) {
-          _fetchDiaryEntries();
-        }
-      });
-    }
-
-    Future<void> _fetchDiaryEntries() async {
-      if (_isLoadingDiary) return;
-
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
+    _tabController.addListener(() {
       setState(() {
-        _isLoadingDiary = true;
+        _currentIndex = _tabController.index;
       });
 
-      try {
-        final supabase = Supabase.instance.client;
-        final currentUser = supabase.auth.currentUser;
+      // Fetch diary data when diary tab is selected
+      if (_tabController.index == 2 && _diaryEntries.isEmpty) {
+        _fetchDiaryEntries();
+      }
+    });
+  }
 
-        if (currentUser == null) {
-          print('No authenticated user found');
-          return;
-        }
+  Future<void> _fetchDiaryEntries() async {
+    if (_isLoadingDiary) return;
 
-        // 1. Get the diary for this user
-        final diaryResponse = await supabase
-            .from('diary')
-            .select('diary_id')
-            .eq('user_id', currentUser.id)
-            .limit(1);
+    setState(() {
+      _isLoadingDiary = true;
+    });
 
-        if (diaryResponse.isEmpty) {
-          print('No diary found for user');
-          setState(() {
-            _diaryEntries = [];
-            _isLoadingDiary = false;
-          });
-          return;
-        }
+    try {
+      final supabase = Supabase.instance.client;
+      final currentUser = supabase.auth.currentUser;
 
-        final diaryId = diaryResponse.first['diary_id'];
+      if (currentUser == null) {
+        print('No authenticated user found');
+        return;
+      }
 
-        // 2. Get diary entries
-        final entriesResponse = await supabase
-            .from('diary_entry')
-            .select('entry_id, note, entry_date')
-            .eq('diary_id', diaryId)
-            .order('entry_date', ascending: false);
+      // 1. Get the diary for this user
+      final diaryResponse = await supabase
+          .from('diary')
+          .select('diary_id')
+          .eq('user_id', currentUser.id) // Use the plant ID from the widget
+          .limit(1);
+      print("the id is ${widget.userPlant.plant.plantId}");
 
-        // 3. For each entry, get all associated images
-        List<Map<String, dynamic>> processedEntries = [];
+      if (diaryResponse.isEmpty) {
+        print('No diary found for user');
+        setState(() {
+          _diaryEntries = [];
+          _isLoadingDiary = false;
+        });
+        return;
+      }
 
-        for (var entry in entriesResponse) {
-          // Get all images for this entry through diary_images junction table
-          final imagesResponse = await supabase.from('diary_images').select('''
+      final diaryId = diaryResponse.first['diary_id'];
+
+      // 2. Get diary entries
+      final entriesResponse = await supabase
+          .from('diary_entry')
+          .select('entry_id, note, entry_date')
+          .eq('diary_id', diaryId)
+          .eq('plant_id', widget.userPlant.plant.plantId)
+          .order('entry_date', ascending: false);
+
+      // 3. For each entry, get all associated images
+      List<Map<String, dynamic>> processedEntries = [];
+
+      for (var entry in entriesResponse) {
+        // Get all images for this entry through diary_images junction table
+        final imagesResponse = await supabase.from('diary_images').select('''
                 image:image_id (
                   image_id,
                   url,
@@ -100,68 +102,68 @@ class _UserPlantPageState extends State<UserPlantPage>
                 )
               ''').eq('entry_id', entry['entry_id']);
 
-          // Process images to get signed URLs
-          List<Map<String, dynamic>> processedImages = [];
+        // Process images to get signed URLs
+        List<Map<String, dynamic>> processedImages = [];
 
-          for (var imageEntry in imagesResponse) {
-            if (imageEntry['image'] != null &&
-                imageEntry['image']['file_path'] != null) {
-              try {
-                final signedUrl = await supabase.storage
-                    .from('private-uploads')
-                    .createSignedUrl(
-                        imageEntry['image']['file_path'], 3600); // 1 hour expiry
+        for (var imageEntry in imagesResponse) {
+          if (imageEntry['image'] != null &&
+              imageEntry['image']['file_path'] != null) {
+            try {
+              final signedUrl = await supabase.storage
+                  .from('private-uploads')
+                  .createSignedUrl(
+                      imageEntry['image']['file_path'], 3600); // 1 hour expiry
 
-                processedImages.add({
-                  'image_id': imageEntry['image']['image_id'],
-                  'image_url': signedUrl,
-                  'image_name': imageEntry['image']['img_name'],
-                });
-              } catch (e) {
-                print(
-                    'Error creating signed URL for image ${imageEntry['image']['image_id']}: $e');
-                // Fallback to public URL if available
-                processedImages.add({
-                  'image_id': imageEntry['image']['image_id'],
-                  'image_url': imageEntry['image']['url'],
-                  'image_name': imageEntry['image']['img_name'],
-                });
-              }
+              processedImages.add({
+                'image_id': imageEntry['image']['image_id'],
+                'image_url': signedUrl,
+                'image_name': imageEntry['image']['img_name'],
+              });
+            } catch (e) {
+              print(
+                  'Error creating signed URL for image ${imageEntry['image']['image_id']}: $e');
+              // Fallback to public URL if available
+              processedImages.add({
+                'image_id': imageEntry['image']['image_id'],
+                'image_url': imageEntry['image']['url'],
+                'image_name': imageEntry['image']['img_name'],
+              });
             }
           }
-
-          Map<String, dynamic> processedEntry = {
-            'entry_id': entry['entry_id'],
-            'note': entry['note'],
-            'entry_date': entry['entry_date'],
-            'images': processedImages, // Array of all images for this entry
-          };
-
-          processedEntries.add(processedEntry);
         }
 
-        setState(() {
-          _diaryEntries = processedEntries;
-          _isLoadingDiary = false;
-        });
+        Map<String, dynamic> processedEntry = {
+          'entry_id': entry['entry_id'],
+          'note': entry['note'],
+          'entry_date': entry['entry_date'],
+          'images': processedImages, // Array of all images for this entry
+        };
 
-        print('✅ Loaded ${processedEntries.length} diary entries');
-      } catch (e) {
-        print('Error fetching diary entries: $e');
-        setState(() {
-          _isLoadingDiary = false;
-        });
+        processedEntries.add(processedEntry);
+      }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error loading diary entries: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      setState(() {
+        _diaryEntries = processedEntries;
+        _isLoadingDiary = false;
+      });
+
+      print('✅ Loaded ${processedEntries.length} diary entries');
+    } catch (e) {
+      print('Error fetching diary entries: $e');
+      setState(() {
+        _isLoadingDiary = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading diary entries: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
+  }
 
   @override
   void dispose() {
@@ -264,74 +266,73 @@ class _UserPlantPageState extends State<UserPlantPage>
                 ),
                 const SizedBox(width: 16),
 
-              // Plant Details
-             // Plant Info with Care Guide Button
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plant.commonName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                // Plant Details
+                // Plant Info with Care Guide Button
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plant.commonName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      plant.scientificName ?? 'Unknown species',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF399942),
-                        fontStyle: FontStyle.italic,
+                      const SizedBox(height: 4),
+                      Text(
+                        plant.scientificName ?? 'Unknown species',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF399942),
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Needs ${plant.sunlight?.toLowerCase() ?? 'unknown'}, ${plant.water?.toLowerCase() ?? 'unknown watering'}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
+                      const SizedBox(height: 8),
+                      Text(
+                        'Needs ${plant.sunlight?.toLowerCase() ?? 'unknown'}, ${plant.water?.toLowerCase() ?? 'unknown watering'}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CareGuidePage(plant: widget.plant),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CareGuidePage(plant: widget.plant),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF399942),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF399942),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Text(
-                            'See Care Guide',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                            child: const Text(
+                              'See Care Guide',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-  
               ],
             ),
           ),
-          
 
           // Tab Bar
           Container(
@@ -347,7 +348,7 @@ class _UserPlantPageState extends State<UserPlantPage>
               data: Theme.of(context).copyWith(
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
-                dividerColor: Colors.transparent, 
+                dividerColor: Colors.transparent,
               ),
               child: TabBar(
                 controller: _tabController,
@@ -374,24 +375,23 @@ class _UserPlantPageState extends State<UserPlantPage>
 
           // Tab Content
           Expanded(
-          child: Container(
-            color: Colors.white, 
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                PlantTimelineWidget(userPlant: widget.userPlant),
-                PlantTasksWidget(userPlant: widget.userPlant),
-                PlantDiaryWidget(
+            child: Container(
+              color: Colors.white,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  PlantTimelineWidget(userPlant: widget.userPlant),
+                  PlantTasksWidget(userPlant: widget.userPlant),
+                  PlantDiaryWidget(
                     userPlant: widget.userPlant,
                     diaryEntries: _diaryEntries,
                     isLoading: _isLoadingDiary,
                     onRefresh: _fetchDiaryEntries,
                   ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-
         ],
       ),
     );

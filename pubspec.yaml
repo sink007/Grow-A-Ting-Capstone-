@@ -39,7 +39,7 @@ dependencies:
   tflite_flutter: ^0.11.0
   google_fonts: ^6.2.1
   http: ^1.2.1
-  intl: ^0.20.2
+  intl: 
   location: ^5.0.3
   supabase_flutter: ^2.0.0
   shared_preferences: ^2.2.2
