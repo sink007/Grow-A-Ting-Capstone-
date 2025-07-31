@@ -21,7 +21,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Map<String, dynamic>? weatherData;
   bool isLoadingWeather = true;
   String? weatherErrorMessage;
@@ -38,8 +38,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
 
     WidgetsBinding.instance.addObserver(this);
 
-    fetchWeather();
-    _fetchUserPlants();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchUserPlants();
+        fetchWeather();
+      }
+    });
   }
 
   @override
@@ -69,64 +73,76 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
     }
   }
 
-
   Future<void> _fetchUserPlants() async {
-  if (!mounted) {
-    print('Widget not mounted, returning');
-    return;
-  }
-  
-  if (mounted) {
-    setState(() {
-      isLoadingPlants = true;
-    });
-  }
-
-  try {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) {
-
-      throw Exception('User not authenticated');
+    if (!mounted) {
+      print('Widget not mounted, returning');
+      return;
     }
 
-    final url = 'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
-    
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      if (mounted) {
-        setState(() {
-          userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
-          
-          userPlants.sort((a, b) => b.date.compareTo(a.date));
-          
-        });
-      }
-    } else {
-      print('Failed to load plants: ${response.statusCode}');
-      print('Error body: ${response.body}');
-    }
-  } catch (e, stackTrace) {
-    print('Error fetching plants: $e');
-    print('Stack trace: $stackTrace');
-  } finally {
     if (mounted) {
       setState(() {
-        isLoadingPlants = false;
+        isLoadingPlants = true;
       });
     }
-    print('_fetchUserPlants completed');
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final url =
+          'https://grow-a-ting-capstone.onrender.com/user/${user.id}/plants';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            userPlants = data.map((json) => UserPlant.fromJson(json)).toList();
+
+            userPlants.sort((a, b) => b.date.compareTo(a.date));
+          });
+        }
+      } else {
+        print('Failed to load plants: ${response.statusCode}');
+        print('Error body: ${response.body}');
+      }
+    } catch (e, stackTrace) {
+      print('Error fetching plants: $e');
+      print('Stack trace: $stackTrace');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingPlants = false;
+        });
+      }
+      print('_fetchUserPlants completed');
+    }
   }
-}
 
   Future<void> fetchWeather() async {
+    if (!mounted) {
+      print('Widget not mounted, returning');
+      return;
+    }
     try {
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (!mounted) {
+        print('Widget not mounted after delay, returning');
+        return;
+      }
       LocationData locationData = await _getCurrentLocation();
-      
+
+      if (!mounted) {
+        print('Widget not mounted after getting location, returning');
+        return;
+      }
       final data = await WeatherService.fetchWeatherFromCoordinates(
         locationData.latitude!,
         locationData.longitude!,
@@ -135,7 +151,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
       //TESTING: Override temperature in weather data BEFORE setting state
       // data['main']['temp'] = 35.0;
       // print(' Temperature overridden to: ${data['main']['temp']}°C');
-
 
       if (mounted) {
         setState(() {
@@ -158,28 +173,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
 
   Future<LocationData> _getCurrentLocation() async {
     Location location = Location();
-
-    bool serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
+    try {
+      bool serviceEnabled = await location.serviceEnabled();
       if (!serviceEnabled) {
-        throw Exception('Location services are disabled');
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          throw Exception('Location services are disabled');
+        }
       }
-    }
 
-    PermissionStatus permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        throw Exception('Location permissions are denied');
+      PermissionStatus permissionGranted = await location.hasPermission();
+      if (permissionGranted == PermissionStatus.denied) {
+        permissionGranted = await location.requestPermission();
+        if (permissionGranted != PermissionStatus.granted) {
+          throw Exception('Location permissions are denied');
+        }
       }
-    }
 
-    return await location.getLocation();
+      final locationData = await location.getLocation();
+
+      if (locationData.latitude == null || locationData.longitude == null) {
+        throw Exception('Invalid location data received');
+      }
+
+      return locationData;
+    } catch (e) {
+      print(' Location error: $e');
+      throw e;
+    }
+    // return await location.getLocation();
   }
 
   // Temperature Alert Methods
-  List<TemperatureAlert> _generateTemperatureAlerts(List<UserPlant> plants, double currentTemp) {
+  List<TemperatureAlert> _generateTemperatureAlerts(
+      List<UserPlant> plants, double currentTemp) {
     List<TemperatureAlert> alerts = [];
     for (UserPlant userPlant in plants) {
       final plant = userPlant.plant;
@@ -188,23 +215,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
       if (idealTemp == null) {
         continue;
       }
-      
+
       if (currentTemp > idealTemp.max) {
         alerts.add(TemperatureAlert(
           plantName: plant.commonName,
-          message: "Max temperature for ${plant.commonName} is ${idealTemp.max}°C. Relocate to a shaded area or use a breathable tarp to reduce heat stress.",
+          message:
+              "Max temperature for ${plant.commonName} is ${idealTemp.max}°C. Relocate to a shaded area or use a breathable tarp to reduce heat stress.",
           type: AlertType.tooHot,
         ));
       } else if (currentTemp < idealTemp.min) {
         alerts.add(TemperatureAlert(
           plantName: plant.commonName,
-          message: "Min temperature for ${plant.commonName} is ${idealTemp.min}°C. Protect plants by moving to a warmer location.",
+          message:
+              "Min temperature for ${plant.commonName} is ${idealTemp.min}°C. Protect plants by moving to a warmer location.",
           type: AlertType.tooCold,
         ));
-      } else {
-      }
+      } else {}
     }
-    
+
     return alerts;
   }
 
@@ -216,47 +244,45 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver{
   bool _hasTemperatureAlerts() {
     final currentTemp = _getCurrentTemperature();
     if (currentTemp == null) return false;
-    
+
     final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
     return alerts.isNotEmpty;
   }
 
-  
-Widget _buildTemperatureAlertSection() {
-  
-  if (isLoadingWeather || weatherData == null || userPlants.isEmpty) {
-    return const SizedBox.shrink();
+  Widget _buildTemperatureAlertSection() {
+    if (isLoadingWeather || weatherData == null || userPlants.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final currentTemp = _getCurrentTemperature();
+
+    if (currentTemp == null) {
+      return const SizedBox.shrink();
+    }
+
+    final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
+
+    return WeatherAlertCard(
+      alerts: alerts,
+      currentTemperature: currentTemp,
+      onSeeAllPressed: alerts.length > 2
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WeatherAlertPage(
+                    alerts: alerts,
+                    currentTemperature: currentTemp,
+                  ),
+                ),
+              );
+            }
+          : null,
+    );
   }
-
-  final currentTemp = _getCurrentTemperature();
-  
-  if (currentTemp == null) {
-    return const SizedBox.shrink();
-  }
-
-  final alerts = _generateTemperatureAlerts(userPlants, currentTemp);
-  
-  return WeatherAlertCard(
-    alerts: alerts,
-    currentTemperature: currentTemp,
-    onSeeAllPressed: alerts.length > 2 ? () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WeatherAlertPage(
-            alerts: alerts,
-            currentTemperature: currentTemp,
-          ),
-        ),
-      );
-    } : null,
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -293,12 +319,12 @@ Widget _buildTemperatureAlertSection() {
           SliverToBoxAdapter(
             child: _buildWeatherSection(),
           ),
-          
+
           // Temperature Alert section
           SliverToBoxAdapter(
             child: _buildTemperatureAlertSection(),
           ),
-          
+
           // Sticky header for "My Plants" section
           SliverAppBar(
             automaticallyImplyLeading: false,
@@ -310,7 +336,8 @@ Widget _buildTemperatureAlertSection() {
             toolbarHeight: 70,
             flexibleSpace: SafeArea(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -421,13 +448,14 @@ Widget _buildTemperatureAlertSection() {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (mounted) {
                   setState(() {
                     isLoadingWeather = true;
                     weatherErrorMessage = null;
                   });
                 }
+                await Future.delayed(const Duration(milliseconds: 500));
                 fetchWeather();
               },
               child: const Text('Try Again'),
@@ -465,7 +493,6 @@ Widget _buildTemperatureAlertSection() {
       child: Column(
         children: [
           const SizedBox(height: 8),
-          
           if (isLoadingPlants)
             const Center(
               child: CircularProgressIndicator(
@@ -528,7 +555,8 @@ Widget _buildTemperatureAlertSection() {
                                         child: Image.network(
                                           plant.imageUrl!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
                                             return const Center(
                                               child: Icon(
                                                 Icons.local_florist,
@@ -668,7 +696,6 @@ Widget _buildTemperatureAlertSection() {
                 ],
               ),
             ),
-          
           const SizedBox(height: 24),
         ],
       ),
