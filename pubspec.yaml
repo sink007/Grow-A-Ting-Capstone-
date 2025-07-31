@@ -78,8 +78,7 @@ flutter:
   assets:
     - .env
     - assets/images/
-    - assets/diagnosis/plant_modelV2.tflite
-    - assets/diagnosis/classV2_names.json
+    - assets/diagnosis/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

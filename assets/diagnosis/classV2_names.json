@@ -1,1 +1,27 @@
-["Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy", "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot", "Corn_(maize)___Common_rust_", "Corn_(maize)___Northern_Leaf_Blight", "Corn_(maize)___healthy", "Pepper,_bell___Bacterial_spot", "Pepper,_bell___healthy", "Potato___Early_blight", "Potato___Late_blight", "Potato___healthy", "Tomato___Bacterial_spot", "Tomato___Early_blight", "Tomato___Late_blight", "Tomato___Leaf_Mold", "Tomato___Septoria_leaf_spot", "Tomato___Spider_mites Two-spotted_spider_mite", "Tomato___Target_Spot", "Tomato___Tomato_Yellow_Leaf_Curl_Virus", "Tomato___Tomato_mosaic_virus", "Tomato___healthy", "cassava- bacterial blight", "cassava- brown spot", "cassava- green mite", "cassava- healthy", "cassava- mosaic", "orange_Black_spot", "orange_canker", "orange_greening", "orange_healthy"]
+[
+  "Cherry - Powdery Mildew",
+  "Cherry - Healthy",
+  "Corn - Cercospora/Gray Leaf Spot",
+  "Corn - Common Rust",
+  "Corn - Northern Leaf Blight",
+  "Corn - Healthy",
+  "Pepper - Bacterial Spot",
+  "Pepper - Healthy",
+  "Potato - Early Blight",
+  "Potato - Late Blight",
+  "Potato - Healthy",
+  "Cassava - Bacterial Blight",
+  "Cassava - Brown Spot",
+  "Cassava - Green Mite",
+  "Cassava - Healthy",
+  "Cassava - Mosaic Virus",
+  "Orange - Black Spot",
+  "Orange - Canker",
+  "Orange - Greening",
+  "Orange - Healthy",
+  "Tomato - Early Blight",
+  "Tomato - Healthy",
+  "Tomato - Late Blight",
+  "Tomato - Magnesium Deficiency",
+  "Tomato - Nitrogen Deficiency"
+]
