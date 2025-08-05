@@ -148,10 +148,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         locationData.longitude!,
       );
 
-      //TESTING: Override temperature in weather data BEFORE setting state
-      // data['main']['temp'] = 35.0;
-      // print(' Temperature overridden to: ${data['main']['temp']}°C');
-
       if (mounted) {
         setState(() {
           weatherData = data;
