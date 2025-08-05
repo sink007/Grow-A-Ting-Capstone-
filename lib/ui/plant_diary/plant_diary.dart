@@ -56,7 +56,7 @@ class _PlantDiaryPageState extends State<PlantDiaryPage> {
             'https://grow-a-ting-capstone.onrender.com/user/$userId/diary'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'plant_id': 1, // Replace with actual plant_id if you have one
+          'plant_id': 1, 
           'title': 'My Plant Diary'
         }),
       );
